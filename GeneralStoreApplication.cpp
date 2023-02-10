@@ -12,6 +12,8 @@ void printLogo();
 void productAdd();
 void productRemove();
 void productUpdate();
+void processProductManagement();
+void productUpdateHandle(int choice, int productLocation);
 bool isPresent(string data, string array[], int arraySize);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(string arr[], int size);
@@ -23,7 +25,7 @@ void gotoxy(int x, int y);
 void logout();
 void processAdmin(int choice);
 void processCashier(int choice);
-void movePointer(int pointerPos, int previousPos);
+void movePointer(int pointerPos, int previousPos, int offset);
 
 // string menus
 string adminMenu[] = {
@@ -41,6 +43,12 @@ string cashierMenu[] = {
     "View list of products and their quantities",
     "logout..."};
 
+string productEditMenu[] = {
+    "Change Product name",
+    "update cost price",
+    "update profit percentage needed",
+    "update quantity in inventory",
+    "back..."};
 // Products
 #define NoOfProducts 100
 int currentNumberOfProducts = 0;
@@ -61,7 +69,6 @@ bool someoneLoggedIn = false;
 string currentUser = "";
 int role = -1;
 double netProfit = 0;
-
 
 int main()
 {
@@ -183,9 +190,62 @@ void productList()
             count++;
         }
     }
-    cin.get();
     cin.sync();
 }
+int takeProductChoice(int size)
+{
+    int pointerPos = 0;
+    int previousPos = 0;
+    int offset = 6;
+    movePointer(previousPos, pointerPos, offset);
+    while (1)
+    {
+        int key = getch();
+        if (GetAsyncKeyState(VK_UP) && pointerPos > 0)
+        {
+            previousPos = pointerPos;
+            pointerPos--;
+            movePointer(previousPos, pointerPos, offset);
+        }
+        else if (GetAsyncKeyState(VK_DOWN) && pointerPos < size - 1)
+        {
+            previousPos = pointerPos;
+            pointerPos++;
+            movePointer(previousPos, pointerPos, offset);
+        }
+        if (key > '0' && key <= '9')
+        {
+            key -= '0';
+            if (key <= size)
+            {
+                return key - 1;
+            }
+        }
+        if (key == VK_ESCAPE)
+        {
+            return -1;
+        }
+        else if (key == VK_RETURN)
+        {
+            return pointerPos;
+        }
+        Sleep(100);
+    }
+}
+/*void productEditPrint(int productLocation)
+{
+    printLogo();
+    cout << "  "
+         << "1.Product Name:" << productNames[productLocation] << endl;
+    cout << "  "
+         << "2.Cost Price:" << productCostPrice[productLocation] << endl;
+    cout << "  "
+         << "3.Profit Percentage:" << productProfitPercentage[productLocation] << endl;
+    cout << "  "
+         << "4.Quantity in Inventory:" << productQuantity[productLocation] << endl;
+    cout << "  "
+         << "5.back..." << endl;
+}*/
 void productAdd()
 {
     string productName;
@@ -235,6 +295,7 @@ void productRemove()
         currentNumberOfProducts--;
     }
 }
+
 void productUpdate()
 {
     string productName;
@@ -326,6 +387,60 @@ void init()
         productQuantity[0] = 0;
     }
 }
+void productUpdateHandle(int choice, int productLocation)
+{
+    printLogo();
+    if (choice == 0)
+    {
+        string productName;
+        cout << "Enter the new product name: ";
+        cin.sync();
+        getline(cin, productName);
+        cin.sync();
+        if (productName == "")
+        {
+            errorDisplay("product name cannot be empty");
+            return;
+        }
+        productNames[productLocation] = productName;
+    }
+    else if (choice == 1)
+    {
+        int costPrice;
+        cout << "Enter the new cost price: ";
+        cin >> costPrice;
+        if (costPrice <= 0)
+        {
+            errorDisplay("invalid cost price");
+            return;
+        }
+        productCostPrice[productLocation] = costPrice;
+    }
+    else if (choice == 2)
+    {
+        int profitPercentage;
+        cout << "Enter the new profit percentage: ";
+        cin >> profitPercentage;
+        if (profitPercentage < 0)
+        {
+            errorDisplay("invalid profit percentage");
+            return;
+        }
+        productProfitPercentage[productLocation] = profitPercentage;
+    }
+    else if (choice == 3)
+    {
+        int quantity;
+        cout << "Enter the new quantity: ";
+        cin >> quantity;
+        if (quantity < 0)
+        {
+            errorDisplay("quantity of product cannot be negetive");
+            return;
+        }
+        productQuantity[productLocation] = quantity;
+    }
+}
 void processCashier(int choice)
 {
     if (choice == 0)
@@ -345,7 +460,8 @@ void processAdmin(int choice)
 {
     if (choice == 0)
     {
-        productList();
+        //  productList();
+        processProductManagement();
     }
     else if (choice == 1)
     {
@@ -374,6 +490,16 @@ void processAdmin(int choice)
     else if (choice == 7)
     {
         logout();
+    }
+}
+void processProductManagement()
+{
+    productList();
+    int productLocation = takeProductChoice(currentNumberOfProducts);
+    if (productLocation != -1)
+    {
+        int choice = takeChoice(productEditMenu, 5);
+        productUpdateHandle(choice, productLocation);
     }
 }
 void Login()
@@ -464,12 +590,13 @@ int takeChoice(string arr[], int size)
 {
     int pointerPos = 0;
     int previousPos = 0;
+    int offset = 4;
     printLogo();
     for (int i = 1; i <= size; i++)
     {
         cout << "  " << i << ".\t" << arr[i - 1] << endl;
     }
-    movePointer(previousPos, pointerPos);
+    movePointer(previousPos, pointerPos, offset);
     while (1)
     {
         int key = getch();
@@ -477,13 +604,13 @@ int takeChoice(string arr[], int size)
         {
             previousPos = pointerPos;
             pointerPos--;
-            movePointer(previousPos, pointerPos);
+            movePointer(previousPos, pointerPos, offset);
         }
         else if (GetAsyncKeyState(VK_DOWN) && pointerPos < size - 1)
         {
             previousPos = pointerPos;
             pointerPos++;
-            movePointer(previousPos, pointerPos);
+            movePointer(previousPos, pointerPos, offset);
         }
         if (key > '0' && key <= '9')
         {
@@ -504,10 +631,10 @@ int takeChoice(string arr[], int size)
         Sleep(100);
     }
 }
-void movePointer(int previousPos, int pointerPos)
+void movePointer(int previousPos, int pointerPos, int offset)
 {
-    previousPos += 4;
-    pointerPos += 4;
+    previousPos += offset;
+    pointerPos += offset;
     gotoxy(0, previousPos);
     cout << "  ";
     gotoxy(0, pointerPos);
