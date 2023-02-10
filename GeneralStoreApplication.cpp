@@ -4,13 +4,21 @@
 using namespace std;
 
 // prototypes
+void init();
 void Login();
 void addUser();
-void printAdminMenu();
+void removeUser();
 void printLogo();
-void printCashierMenu();
-int choiceEntered();
+void addProduct();
+void removeProduct();
+void productUpdate();
+bool isPresent(string data, string array[], int arraySize);
+int searchIndex(string data, string array[], int arraySize);
 int takeChoice(string arr[], int size);
+void processNewOrder();
+void halt();
+void viewNetProfit();
+void errorDisplay(string error);
 void gotoxy(int x, int y);
 void logout();
 void processAdmin(int choice);
@@ -30,7 +38,8 @@ string adminMenu[] = {
 
 string cashierMenu[] = {
     "New order",
-    "logout"};
+    "View list of products and their quantities",
+    "logout..."};
 
 // Products
 #define NoOfProducts 100
@@ -51,7 +60,77 @@ int usersRegistered = 1;
 bool someoneLoggedIn = false;
 string currentUser = "";
 int role = -1;
+double netProfit = 0;
 
+
+int main()
+{
+    init();
+    while (1)
+    {
+        while (!someoneLoggedIn)
+        {
+            Login();
+        }
+        while (role == 0)
+        {
+            processAdmin(takeChoice(adminMenu, 8));
+        }
+        while (role == 1)
+        {
+            processCashier(takeChoice(cashierMenu, 3));
+        }
+    }
+}
+void printLogo()
+{
+    system("cls");
+    cout << "*******************************************************************************" << endl;
+    cout << "**********************General Store Management Applcation**********************" << endl;
+    cout << "*******************************************************************************" << endl;
+    cout << endl;
+}
+bool isPresent(string data, string array[], int arraySize)
+{
+    for (int i = 0; i < arraySize; i++)
+    {
+        if (data == array[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+int searchIndex(string data, string array[], int arraySize)
+{
+    for (int i = 0; i < arraySize; i++)
+    {
+        if (data == array[i])
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+void errorDisplay(string error)
+{
+    cout << "Error:" << error << endl;
+    cout << "Press any key to continue..." << endl;
+    getch();
+    cin.sync();
+}
+void halt()
+{
+    cout << "Press any key to continue..." << endl;
+    getch();
+    cin.sync();
+}
+void viewNetProfit()
+{
+    printLogo();
+    cout << "Net Profit: " << netProfit << "Rs" << endl;
+    halt();
+}
 void productList()
 {
     system("cls");
@@ -63,7 +142,7 @@ void productList()
     {
         if (productNames[count] != "")
         {
-            gotoxy(2, count + 1+5);
+            gotoxy(2, count + 1 + 5);
             cout << productNames[count];
             count++;
         }
@@ -75,31 +154,31 @@ void productList()
     {
         if (productNames[count] != "")
         {
-            gotoxy(20, count + 1+5);
+            gotoxy(20, count + 1 + 5);
             cout << productCostPrice[count];
             count++;
         }
     }
-     count = 0;
+    count = 0;
     gotoxy(40, 5);
     cout << "Profit";
     while (count != currentNumberOfProducts)
     {
         if (productNames[count] != "")
         {
-            gotoxy(40, count + 1+5);
-            cout << productProfitPercentage[count]<<"%";
+            gotoxy(40, count + 1 + 5);
+            cout << productProfitPercentage[count] << "%";
             count++;
         }
     }
-        count = 0;
+    count = 0;
     gotoxy(50, 5);
     cout << "Quantity Present";
     while (count != currentNumberOfProducts)
     {
         if (productNames[count] != "")
         {
-            gotoxy(50, count + 1+5);
+            gotoxy(50, count + 1 + 5);
             cout << productQuantity[count];
             count++;
         }
@@ -107,18 +186,12 @@ void productList()
     cin.get();
     cin.sync();
 }
-
-void testingRemoveUser()
-{
-    cout << "Enter the username to remove a user: ";
-    cin.get();
-}
 void productAdd()
 {
     string productName;
     float costPrice, profitPercentage;
     int quantity;
-    int count=0;
+    int count = 0;
     printLogo();
     cout << "Enter the name of product: ";
     getline(cin, productName);
@@ -130,49 +203,112 @@ void productAdd()
     cout << "Enter the current quantity of product in inventory: ";
     cin >> quantity;
     cin.sync();
-  for(int i=0;i<NoOfProducts;i++)
-  {
-    if(productNames[i]=="")
+    productNames[currentNumberOfProducts] = productName;
+    productCostPrice[currentNumberOfProducts] = costPrice;
+    productProfitPercentage[currentNumberOfProducts] = profitPercentage;
+    productQuantity[currentNumberOfProducts] = quantity;
+    currentNumberOfProducts++;
+}
+void productRemove()
+{
+    string product;
+    int productLocation = -1;
+    printLogo();
+    cout << "Enter the name of product to remove it: ";
+    cin.sync();
+    getline(cin, product);
+    cin.sync();
+    productLocation = searchIndex(product, productNames, currentNumberOfProducts);
+    if (productLocation == -1)
     {
-        productNames[i]=productName;
-        productCostPrice[i]=costPrice;
-        productProfitPercentage[i]=profitPercentage;
-        productQuantity[i]=quantity;
-        currentNumberOfProducts++;
+        errorDisplay("product does not exist!");
+    }
+    else
+    {
+        for (int i = productLocation; i < currentNumberOfProducts; i++)
+        {
+            productNames[i] = productNames[i + 1];
+            productCostPrice[i] = productCostPrice[i + 1];
+            productQuantity[i] = productQuantity[i + 1];
+            productProfitPercentage[i] = productProfitPercentage[i + 1];
+        }
+        currentNumberOfProducts--;
+    }
+}
+void productUpdate()
+{
+    string productName;
+    float costPrice, profitPercentage;
+    int quantity;
+    int productLocation = -1;
+    int count = 0;
+    printLogo();
+    cout << "Enter the name of product to update: ";
+    getline(cin, productName);
+    productLocation = searchIndex(productName, productNames, currentNumberOfProducts);
+    if (productLocation == -1)
+    {
+        errorDisplay("product not found!");
         return;
     }
-  }
-}
-void testingProductRemove()
-{
-    cout << "Enter the name of product to remove it: ";
-    cin.get();
-}
-void testingUpdateQuantity()
-{
-    string blah;
-    cout << "Enter the name of product to update: ";
-    cin >> blah;
     cout << "Enter the unit cost price of product: ";
-    cin >> blah;
+    cin.sync();
+    cin >> costPrice;
     cout << "Enter the percentage of profit desired on product: ";
-    cin >> blah;
+    cin >> profitPercentage;
     cout << "Enter the current quantity of product in inventory: ";
-    cin >> blah;
+    cin >> quantity;
+    cin.sync();
+    productNames[productLocation] = productName;
+    productCostPrice[productLocation] = costPrice;
+    productProfitPercentage[productLocation] = profitPercentage;
+    productQuantity[productLocation] = quantity;
 }
-void testingNetProfit()
+void processNewOrder()
 {
-    cout << "Net Profit: 1500Rs" << endl;
-}
-void testingNewOrder()
-{
-    cout << "Enter the name of product: Bread" << endl;
-    cout << "Enter the quantity: 15" << endl;
-    cout << "Another item?[press y or n]:y" << endl;
-    cout << "Enter the name of product: water bottle" << endl;
-    cout << "Enter the quantity: 3" << endl;
-    cout << "Another item?[press y or n]:n" << endl;
-    cout << "Amount payable: 3000Rs" << endl;
+    string product;
+    int quantity;
+    int productIndex = -1;
+    bool running = true;
+    double pricePayable = 0;
+    int option;
+    printLogo();
+    while (running)
+    {
+        cin.sync();
+        cout << "Enter the name of product: ";
+        getline(cin, product);
+        productIndex = searchIndex(product, productNames, currentNumberOfProducts);
+        if (productIndex == -1)
+        {
+            errorDisplay("product not present!");
+            continue;
+        }
+        cin.sync();
+        cout << "Enter the quantity: ";
+        cin >> quantity;
+        if (quantity < 0)
+        {
+            errorDisplay("quantity cannot be negetive!");
+            continue;
+        }
+        else if (quantity > productQuantity[productIndex])
+        {
+            errorDisplay("not enough quantity present in inventory!");
+            continue;
+        }
+        pricePayable += quantity * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+        netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * quantity) / 100;
+        productQuantity[productIndex] -= quantity;
+        cout << "Another item?[press Y or N]: " << endl;
+        option = getch();
+        if (option == 'n' || option == 'N')
+        {
+            running = false;
+        }
+    }
+    cout << "Price payable: " << pricePayable << "Rs" << endl;
+    halt();
 }
 void init()
 {
@@ -190,50 +326,17 @@ void init()
         productQuantity[0] = 0;
     }
 }
-int main()
-{
-    init();
-    while (1)
-    {
-        while (!someoneLoggedIn)
-        {
-            Login();
-        }
-        while (role == 0)
-        {
-            processAdmin(takeChoice(adminMenu, 8));
-        }
-        while (role == 1)
-        {
-            processCashier(takeChoice(cashierMenu, 2));
-        }
-    }
-    // printAdminMenu();
-    // printCashierMenu();
-    // choiceEntered();
-    // testingProductList();
-    // testingProductAdd();
-    // testingProductRemove();
-    // testingAddUser();
-    // testingRemoveUser();
-    // testingNetProfit();
-    // testingUpdateQuantity();
-    // testingNewOrder();
-}
-void printLogo()
-{
-    system("cls");
-    cout << "*******************************************************************************" << endl;
-    cout << "**********************General Store Management Applcation**********************" << endl;
-    cout << "*******************************************************************************" << endl;
-    cout << endl;
-}
 void processCashier(int choice)
 {
     if (choice == 0)
     {
+        processNewOrder();
     }
     else if (choice == 1)
+    {
+        productList();
+    }
+    else if (choice == 2)
     {
         logout();
     }
@@ -248,30 +351,30 @@ void processAdmin(int choice)
     {
         productAdd();
     }
+    else if (choice == 2)
+    {
+        productRemove();
+    }
+    else if (choice == 3)
+    {
+        productUpdate();
+    }
     else if (choice == 4)
     {
         addUser();
+    }
+    else if (choice == 5)
+    {
+        removeUser();
+    }
+    else if (choice == 6)
+    {
+        viewNetProfit();
     }
     else if (choice == 7)
     {
         logout();
     }
-}
-void printAdminMenu()
-{
-    cout << "1.\t\tView list of products and their quantites" << endl;
-    cout << "2.\t\tAdd a product" << endl;
-    cout << "3.\t\tremove a product" << endl;
-    cout << "4.\t\tupdate quantity of a product" << endl;
-    cout << "5.\t\tadd a user" << endl;
-    cout << "6.\t\tremove a user" << endl;
-    cout << "7.\t\tview net profit" << endl;
-    cout << "8.\t\tlogout..." << endl;
-}
-void printCashierMenu()
-{
-    cout << "1.\tNew order" << endl;
-    cout << "2.\tlogout" << endl;
 }
 void Login()
 {
@@ -281,7 +384,7 @@ void Login()
     getline(cin, username);
     cout << "Your password: ";
     getline(cin, password);
-    for (int i = 0; i < NoOfUsers; i++)
+    for (int i = 0; i < usersRegistered; i++)
     {
         if (username == usernames[i])
         {
@@ -305,16 +408,10 @@ void addUser()
     getline(cin, password);
     cout << "Enter the role of user[admin or cashier]: ";
     getline(cin, role);
-    for (int i = 0; i < NoOfUsers; i++)
+    if (isPresent(username, usernames, usersRegistered))
     {
-        if (username == usernames[i])
-        {
-            cout << endl;
-            cout << "Error:Username already registered!" << endl;
-            cout << "Press Any key to continue...";
-            getch();
-            return;
-        }
+        errorDisplay("Username already registered!");
+        return;
     }
     if ((role != "admin") && (role != "cashier"))
     {
@@ -324,33 +421,45 @@ void addUser()
         getch();
         return;
     }
-    for (int i = 0; i < NoOfUsers; i++)
-    {
-        if (roles[i] == -1)
-        {
-            freeLocation = i;
-            break;
-        }
-    }
     if (role == "admin")
     {
-        roles[freeLocation] = 0;
+        roles[usersRegistered] = 0;
     }
     else if (role == "cashier")
     {
-        roles[freeLocation] = 1;
+        roles[usersRegistered] = 1;
     }
-    usernames[freeLocation] = username;
-    passwords[freeLocation] = password;
+    usernames[usersRegistered] = username;
+    passwords[usersRegistered] = password;
     usersRegistered++;
 }
-/*int choiceEntered()
+void removeUser()
 {
-    int choice=1;
-    cout<<endl<<"Enter your choice: ";
-    cin>>choice;
-    return choice;
-}*/
+    string username;
+    int userLocation = 0;
+    printLogo();
+    cout << "Enter the username of the user to remove: ";
+    getline(cin, username);
+    userLocation = searchIndex(username, usernames, usersRegistered);
+    if (username == currentUser)
+    {
+        errorDisplay("you cannont  delete your own account!");
+    }
+    else if (userLocation == -1)
+    {
+        errorDisplay("user does not exist!");
+    }
+    else
+    {
+        for (int i = userLocation; i < usersRegistered; i++)
+        {
+            usernames[i] = usernames[i + 1];
+            passwords[i] = passwords[i + 1];
+            roles[i] = roles[i + 1];
+        }
+        usersRegistered--;
+    }
+}
 int takeChoice(string arr[], int size)
 {
     int pointerPos = 0;
