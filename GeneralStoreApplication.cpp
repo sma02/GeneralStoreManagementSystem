@@ -197,6 +197,7 @@ void printBill(int productsInOrderCount)
         count++;
     }
     // gotoxy(0, 22);
+    cout << endl;
     if (takeYesNoQuestion("Order confirmed"))
     {
         for (int i = 0; i < productsInOrderCount; i++)
@@ -532,9 +533,6 @@ void processNewOrder()
             errorDisplay("not enough quantity present in inventory!");
             continue;
         }
-        /* pricePayable += quantity * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
-         netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * quantity) / 100;
-         productQuantity[productIndex] -= quantity;*/
         productInOrderIndex = searchIndex(product, productsInOrderNames, productsInOrderCount);
         if (productInOrderIndex == -1)
         {
