@@ -1,2 +1,6 @@
 built.bat
 GeneralStoreApplication.exe
+build.bat
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/settings.json
