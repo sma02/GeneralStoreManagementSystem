@@ -38,6 +38,8 @@ void consoleCursor(bool visibility);
 string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
 int takeIntInput(string message);
+bool isValidIntInput(int input);
+bool isValidFloatInput(float input);
 float takeFloatInput(string message);
 bool takeYesNoQuestion(string message);
 bool isPresent(string data, string array[], int arraySize);
@@ -255,7 +257,11 @@ int takeIntInput(string message)
     consoleCursor(true);
     cout << "Enter the " << message << ": ";
     setColor(0x6);
-    cin >> input;
+    if (!(cin >> input))
+    {
+        cin.ignore();
+        input = -1;
+    }
     setColor(0x7);
     consoleCursor(false);
     return input;
@@ -267,7 +273,11 @@ float takeFloatInput(string message)
     consoleCursor(true);
     cout << "Enter the " << message << ": ";
     setColor(0x6);
-    cin >> input;
+    if (!(cin >> input))
+    {
+        cin.ignore();
+        input = -1;
+    }
     setColor(0x7);
     consoleCursor(false);
     return input;
@@ -327,7 +337,7 @@ void errorDisplay(string error)
 }
 void errorLessThanZero(string item)
 {
-    string actualError = item + " cannot be less than zero!";
+    string actualError = "Invalid input for " + item;
     errorDisplay(actualError);
 }
 void errorEmptyString(string item)
