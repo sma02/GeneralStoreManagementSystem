@@ -11,6 +11,7 @@ void removeUser();
 void printLogo();
 void printMenuItems(int offset, string items[], int arraySize);
 void printCurrentMenuAndUserType(string menuName);
+void printBill(int productsInOrderCount);
 void productAdd();
 void productRemove();
 void processProductManagement();
@@ -38,6 +39,7 @@ string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
 int takeIntInput(string message);
 float takeFloatInput(string message);
+bool takeYesNoQuestion(string message);
 bool isPresent(string data, string array[], int arraySize);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
@@ -55,8 +57,8 @@ string adminMenu[] = {
     "logout..."};
 
 string cashierMenu[] = {
-    "New order",
     "View list of products and their quantities",
+    "New order",
     "logout..."};
 
 string productEditMenu[] = {
@@ -72,6 +74,10 @@ string productNames[NoOfProducts];
 float productCostPrice[NoOfProducts];
 float productProfitPercentage[NoOfProducts];
 int productQuantity[NoOfProducts];
+
+// order details
+string productsInOrderNames[NoOfProducts];
+int productInOrderQuantities[NoOfProducts];
 
 // login info
 #define NoOfUsers 20
@@ -144,6 +150,66 @@ void printMenuItems(int offset, string items[], int arraySize)
     }
     setColor(0x7);
 }
+void printBill(int productsInOrderCount)
+{
+    int productIndex = -1;
+    double price = 0;
+    double pricePayable = 0;
+    printLogo();
+    int count = 0;
+    int offset = 7;
+    gotoxy(2, 5);
+    printTitle("product", 0x30);
+    setColor(0x7);
+    while (count != productsInOrderCount)
+    {
+        gotoxy(3, count + offset);
+        setColor(0x6);
+        cout << productsInOrderNames[count];
+        count++;
+    }
+    count = 0;
+    gotoxy(30, 5);
+    printTitle("Quantity", 0x30);
+    setColor(0x7);
+    while (count != productsInOrderCount)
+    {
+
+        gotoxy(31, count + offset);
+        setColor(0x6);
+        cout << productQuantity[count];
+        count++;
+    }
+    count = 0;
+    gotoxy(45, 5);
+    printTitle("Price", 0x30);
+    setColor(0x7);
+    while (count != productsInOrderCount)
+    {
+
+        gotoxy(46, count + offset);
+        setColor(0x6);
+        productIndex = searchIndex(productsInOrderNames[count], productNames, currentNumberOfProducts);
+        price = productInOrderQuantities[count] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+        cout << price;
+        count++;
+    }
+    // gotoxy(0, 22);
+    if (takeYesNoQuestion("Order confirmed"))
+    {
+        for (int i = 0; i < productsInOrderCount; i++)
+        {
+            productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+            pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+            netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
+            productQuantity[productIndex] -= productInOrderQuantities[i];
+        }
+        setColor(0xa);
+        cout << "Price payable: " << pricePayable << "Rs" << endl;
+        getch();
+        setColor(0x7);
+    }
+}
 void printCurrentMenuAndUserType(string menuName)
 {
     gotoxy(0, 3);
@@ -206,6 +272,25 @@ float takeFloatInput(string message)
     consoleCursor(false);
     return input;
 }
+bool takeYesNoQuestion(string message)
+{
+    int option;
+    setColor(0x3);
+    cout << message << "?[press Y or N]: " << endl;
+    setColor(0x7);
+    while (1)
+    {
+        int option = getch();
+        if (option == 'y' || option == 'Y')
+        {
+            return true;
+        }
+        else if (option == 'n' || option == 'N')
+        {
+            return false;
+        }
+    }
+}
 bool isPresent(string data, string array[], int arraySize)
 {
     for (int i = 0; i < arraySize; i++)
@@ -258,13 +343,13 @@ void halt()
 }
 void viewNetProfit()
 {
-    int x=40,y=10;
+    int x = 40, y = 10;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Net Profit");
-        gotoxy(x-12,y);
+    gotoxy(x - 12, y);
     printTitle("Net Profit", 0x20);
     printPadding(x, y, 8, 1, 0x60);
-    gotoxy(x+1,y);
+    gotoxy(x + 1, y);
     setColor(0x60);
     cout << netProfit << " Rs";
     setColor(0x7);
@@ -280,53 +365,58 @@ void productList()
     setColor(0x7);
     while (count != currentNumberOfProducts)
     {
-        if (productNames[count] != "")
-        {
-            gotoxy(3, count + offset);
-            setColor(0x6);
-            cout << productNames[count];
-            count++;
-        }
+        gotoxy(3, count + offset);
+        setColor(0x6);
+        cout << productNames[count];
+        count++;
     }
     count = 0;
-    gotoxy(20, 5);
-    printTitle("cost Price", 0x30);
+    gotoxy(30, 5);
+    printTitle("Quantity Present", 0x30);
     setColor(0x7);
     while (count != currentNumberOfProducts)
     {
-        if (productNames[count] != "")
+        gotoxy(31, count + offset);
+        setColor(0x6);
+        cout << productQuantity[count];
+        count++;
+    }
+    if (role == 0)
+    {
+        count = 0;
+        gotoxy(53, 5);
+        printTitle("cost Price", 0x30);
+        setColor(0x7);
+        while (count != currentNumberOfProducts)
         {
-            gotoxy(21, count + offset);
+            gotoxy(54, count + offset);
             setColor(0x6);
             cout << productCostPrice[count];
             count++;
         }
-    }
-    count = 0;
-    gotoxy(40, 5);
-    printTitle("Profit", 0x30);
-    setColor(0x7);
-    while (count != currentNumberOfProducts)
-    {
-        if (productNames[count] != "")
+        count = 0;
+        gotoxy(70, 5);
+        printTitle("Profit", 0x30);
+        setColor(0x7);
+        while (count != currentNumberOfProducts)
         {
-            gotoxy(41, count + offset);
+            gotoxy(71, count + offset);
             setColor(0x6);
             cout << productProfitPercentage[count] << "%";
             count++;
         }
     }
-    count = 0;
-    gotoxy(55, 5);
-    printTitle("Quantity Present", 0x30);
-    setColor(0x7);
-    while (count != currentNumberOfProducts)
+    else
     {
-        if (productNames[count] != "")
+        count = 0;
+        gotoxy(53, 5);
+        printTitle("Retail Price", 0x30);
+        setColor(0x7);
+        while (count != currentNumberOfProducts)
         {
-            gotoxy(56, count + offset);
+            gotoxy(54, count + offset);
             setColor(0x6);
-            cout << productQuantity[count];
+            cout << productCostPrice[count] * (100 + productProfitPercentage[count]) / 100;
             count++;
         }
     }
@@ -342,6 +432,11 @@ void productAdd()
     if (productName == "")
     {
         errorEmptyString("product name");
+        return;
+    }
+    else if (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
+    {
+        errorDisplay("product already exists!");
         return;
     }
     float costPrice = takeFloatInput("unit cost price");
@@ -398,8 +493,10 @@ void productRemove()
 void processNewOrder()
 {
     string product;
+    int productsInOrderCount = 0;
     int quantity;
     int productIndex = -1;
+    int productInOrderIndex = -1;
     bool running = true;
     double pricePayable = 0;
     int option;
@@ -411,7 +508,7 @@ void processNewOrder()
         productIndex = searchIndex(product, productNames, currentNumberOfProducts);
         if (productIndex == -1)
         {
-            errorDisplay("product not present!");
+            running = takeYesNoQuestion("Another item");
             continue;
         }
         quantity = takeIntInput("quantity");
@@ -425,22 +522,28 @@ void processNewOrder()
             errorDisplay("not enough quantity present in inventory!");
             continue;
         }
-        pricePayable += quantity * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
-        netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * quantity) / 100;
-        productQuantity[productIndex] -= quantity;
-        setColor(0x3);
-        cout << "Another item?[press Y or N]: " << endl;
-        setColor(0x7);
-        option = getch();
-        if (option == 'n' || option == 'N')
+        /* pricePayable += quantity * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+         netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * quantity) / 100;
+         productQuantity[productIndex] -= quantity;*/
+        productInOrderIndex = searchIndex(product, productsInOrderNames, productsInOrderCount);
+        if (productInOrderIndex == -1)
         {
-            running = false;
+            productsInOrderNames[productsInOrderCount] = product;
+            productInOrderQuantities[productsInOrderCount] = quantity;
+            productsInOrderCount++;
         }
+        else if (productQuantity[productIndex] < (productInOrderQuantities[productInOrderIndex] + quantity))
+        {
+            errorDisplay("not enough quantity present in inventory!");
+            continue;
+        }
+        else
+        {
+            productInOrderQuantities[productInOrderIndex] += quantity;
+        }
+        running = takeYesNoQuestion("Another item");
     }
-    setColor(0xa);
-    cout << "Price payable: " << pricePayable << "Rs" << endl;
-    setColor(0x7);
-    halt();
+    printBill(productsInOrderCount);
 }
 void productUpdateHandle(int choice, int productLocation)
 {
@@ -491,19 +594,19 @@ void handleCashier()
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
     printMenuItems(5, cashierMenu, 3);
-    int choice = takeChoice(5, 8, 0x3);
+    int choice = takeChoice(5, 3, 0x3);
     processCashier(choice);
 }
 void processCashier(int choice)
 {
     if (choice == 0)
     {
-        processNewOrder();
+        productList();
+        getch();
     }
     else if (choice == 1)
     {
-        productList();
-        getch();
+        processNewOrder();
     }
     else if (choice == 2)
     {
