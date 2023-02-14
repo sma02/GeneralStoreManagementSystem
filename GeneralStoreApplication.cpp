@@ -12,6 +12,10 @@ void printLogo();
 void printMenuItems(int offset, string items[], int arraySize);
 void printCurrentMenuAndUserType(string menuName);
 void printBill(int productsInOrderCount);
+void printStringColumn(int x, int y, string title, string items[], int arraySize);
+void printIntColumn(int x, int y, string title, int items[], int arraySize);
+void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo);
+double calculateTotalPayable(int productsInOrderCount);
 void productAdd();
 void productRemove();
 void processProductManagement();
@@ -75,6 +79,7 @@ int currentNumberOfProducts = 0;
 string productNames[NoOfProducts];
 float productCostPrice[NoOfProducts];
 float productProfitPercentage[NoOfProducts];
+float productRetailPrice[NoOfProducts];
 int productQuantity[NoOfProducts];
 
 // order details
@@ -156,62 +161,81 @@ void printBill(int productsInOrderCount)
 {
     int productIndex = -1;
     double price = 0;
-    double pricePayable = 0;
+    float productInOrderPrices[productsInOrderCount];
+    for (int i = 0; i < productsInOrderCount; i++)
+    {
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        productInOrderPrices[i] = productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+    }
     printLogo();
-    int count = 0;
-    int offset = 7;
-    gotoxy(2, 5);
-    printTitle("product", 0x30);
-    setColor(0x7);
-    while (count != productsInOrderCount)
-    {
-        gotoxy(3, count + offset);
-        setColor(0x6);
-        cout << productsInOrderNames[count];
-        count++;
-    }
-    count = 0;
-    gotoxy(30, 5);
-    printTitle("Quantity", 0x30);
-    setColor(0x7);
-    while (count != productsInOrderCount)
-    {
+    printStringColumn(2, 5, "Product", productsInOrderNames, productsInOrderCount);
+    printIntColumn(30, 5, "Quantity", productInOrderQuantities, productsInOrderCount);
+    printFloatColumn(45, 5, "Price", productInOrderPrices, productsInOrderCount, "Rs");
 
-        gotoxy(31, count + offset);
-        setColor(0x6);
-        cout << productQuantity[count];
-        count++;
-    }
-    count = 0;
-    gotoxy(45, 5);
-    printTitle("Price", 0x30);
-    setColor(0x7);
-    while (count != productsInOrderCount)
-    {
-
-        gotoxy(46, count + offset);
-        setColor(0x6);
-        productIndex = searchIndex(productsInOrderNames[count], productNames, currentNumberOfProducts);
-        price = productInOrderQuantities[count] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
-        cout << price;
-        count++;
-    }
     // gotoxy(0, 22);
     cout << endl;
     if (takeYesNoQuestion("Order confirmed"))
     {
-        for (int i = 0; i < productsInOrderCount; i++)
-        {
-            productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
-            pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
-            netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
-            productQuantity[productIndex] -= productInOrderQuantities[i];
-        }
         setColor(0xa);
-        cout << "Price payable: " << pricePayable << "Rs" << endl;
+        cout << "Price payable: " << calculateTotalPayable(productsInOrderCount) << "Rs" << endl;
         getch();
         setColor(0x7);
     }
+}
+double calculateTotalPayable(int productsInOrderCount)
+{
+    int productIndex;
+    double pricePayable;
+    for (int i = 0; i < productsInOrderCount; i++)
+    {
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+        netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
+        productQuantity[productIndex] -= productInOrderQuantities[i];
+    }
+    return pricePayable;
+}
+void printStringColumn(int x, int y, string title, string items[], int arraySize)
+{
+    int count = 0;
+    gotoxy(x, y);
+    printTitle(title, 0x30);
+    setColor(0x6);
+    for (int i = 0; i < arraySize; i++)
+    {
+        gotoxy(x + 1, i + y + 2);
+        cout << items[i];
+        count++;
+    }
+    setColor(0x7);
+}
+void printIntColumn(int x, int y, string title, int items[], int arraySize)
+{
+    int count = 0;
+    gotoxy(x, y);
+    printTitle(title, 0x30);
+    setColor(0x6);
+    for (int i = 0; i < arraySize; i++)
+    {
+        gotoxy(x + 1, i + y + 2);
+        cout << items[i];
+        count++;
+    }
+    setColor(0x7);
+}
+void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo)
+{
+    int count = 0;
+    gotoxy(x, y);
+    printTitle(title, 0x30);
+    setColor(0x6);
+    for (int i = 0; i < arraySize; i++)
+    {
+        gotoxy(x + 1, i + y + 2);
+        cout << items[i] << extraInfo;
+        count++;
+    }
+    setColor(0x7);
 }
 void printCurrentMenuAndUserType(string menuName)
 {
@@ -369,67 +393,16 @@ void viewNetProfit()
 void productList()
 {
     printLogo();
-    int count = 0;
-    int offset = 7;
-    gotoxy(2, 5);
-    printTitle("product", 0x30);
-    setColor(0x7);
-    while (count != currentNumberOfProducts)
-    {
-        gotoxy(3, count + offset);
-        setColor(0x6);
-        cout << productNames[count];
-        count++;
-    }
-    count = 0;
-    gotoxy(30, 5);
-    printTitle("Quantity Present", 0x30);
-    setColor(0x7);
-    while (count != currentNumberOfProducts)
-    {
-        gotoxy(31, count + offset);
-        setColor(0x6);
-        cout << productQuantity[count];
-        count++;
-    }
+    printStringColumn(2, 5, "product", productNames, currentNumberOfProducts);
+    printIntColumn(30, 5, "Quantity Present", productQuantity, currentNumberOfProducts);
     if (role == 0)
     {
-        count = 0;
-        gotoxy(53, 5);
-        printTitle("cost Price", 0x30);
-        setColor(0x7);
-        while (count != currentNumberOfProducts)
-        {
-            gotoxy(54, count + offset);
-            setColor(0x6);
-            cout << productCostPrice[count];
-            count++;
-        }
-        count = 0;
-        gotoxy(70, 5);
-        printTitle("Profit", 0x30);
-        setColor(0x7);
-        while (count != currentNumberOfProducts)
-        {
-            gotoxy(71, count + offset);
-            setColor(0x6);
-            cout << productProfitPercentage[count] << "%";
-            count++;
-        }
+        printFloatColumn(53, 5, "cost Price", productCostPrice, currentNumberOfProducts, "Rs");
+        printFloatColumn(70, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%");
     }
     else
     {
-        count = 0;
-        gotoxy(53, 5);
-        printTitle("Retail Price", 0x30);
-        setColor(0x7);
-        while (count != currentNumberOfProducts)
-        {
-            gotoxy(54, count + offset);
-            setColor(0x6);
-            cout << productCostPrice[count] * (100 + productProfitPercentage[count]) / 100;
-            count++;
-        }
+        printFloatColumn(53, 5, "Retail price", productRetailPrice, currentNumberOfProducts, "Rs");
     }
     cin.sync();
 }
@@ -471,6 +444,7 @@ void productAdd()
     productNames[currentNumberOfProducts] = productName;
     productCostPrice[currentNumberOfProducts] = costPrice;
     productProfitPercentage[currentNumberOfProducts] = profitPercentage;
+    productRetailPrice[currentNumberOfProducts] = costPrice * (100 + profitPercentage) / 100;
     productQuantity[currentNumberOfProducts] = quantity;
     currentNumberOfProducts++;
 }
@@ -497,6 +471,7 @@ void productRemove()
             productCostPrice[i] = productCostPrice[i + 1];
             productQuantity[i] = productQuantity[i + 1];
             productProfitPercentage[i] = productProfitPercentage[i + 1];
+            productRetailPrice[i] = productRetailPrice[i + 1];
         }
         currentNumberOfProducts--;
     }
@@ -575,6 +550,7 @@ void productUpdateHandle(int choice, int productLocation)
             return;
         }
         productCostPrice[productLocation] = costPrice;
+        productRetailPrice[productLocation] = costPrice * (100 + productProfitPercentage[productLocation]) / 100;
     }
     else if (choice == 2)
     {
@@ -585,6 +561,7 @@ void productUpdateHandle(int choice, int productLocation)
             return;
         }
         productProfitPercentage[productLocation] = profitPercentage;
+        productRetailPrice[productLocation] = productCostPrice[productLocation] * (100 + profitPercentage) / 100;
     }
     else if (choice == 3)
     {
