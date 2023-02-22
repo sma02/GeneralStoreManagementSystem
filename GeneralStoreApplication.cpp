@@ -419,7 +419,7 @@ void storeProducts()
     file.open("products.txt", ios::out);
     for (int i = 0; i < currentNumberOfProducts; i++)
     {
-        file << productNames[i] <<'\0';
+        file << productNames[i] << EnumDisplayDevicesW;
         file << productCostPrice[i] << endl;
         file << productQuantity[i] << endl;
         file << productProfitPercentage[i] << endl;
@@ -430,19 +430,21 @@ void loadProducts()
 {
     fstream file;
     file.open("products.txt", ios::in);
-    int i = 0;
-    while (!file.eof())
+    if (file)
     {
-          getline(file,productNames[i],'\0');
-         
-        file >> productCostPrice[i];
-        file >> productQuantity[i];
-        file >> productProfitPercentage[i];
-        i++;
+        int i = 0;
+        while (!file.eof())
+        {
+            getline(file >> ws, productNames[i]);
+            file >> productCostPrice[i];
+            file >> productQuantity[i];
+            file >> productProfitPercentage[i];
+            i++;
+        }
+        file.close();
+        i--;
+        currentNumberOfProducts = i;
     }
-    file.close();
-    i--;
-    currentNumberOfProducts = i;
 }
 void productList()
 {
