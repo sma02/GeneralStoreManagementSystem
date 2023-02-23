@@ -18,10 +18,12 @@ void printStringColumn(int x, int y, string title, string items[], int arraySize
 void printIntColumn(int x, int y, string title, int items[], int arraySize, int padding);
 void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo, int padding);
 double calculateTotalPayable(int productsInOrderCount);
+void swapProduct(int firstProductIndex, int secondProductIndex);
 void productAdd();
 void productRemove();
 void processProductManagement();
 void productList();
+int processProductQuantity(int productLocation);
 void productUpdateHandle(int choice, int productLocation);
 void processNewOrder();
 void halt();
@@ -43,9 +45,12 @@ void printTitle(string text, int paddng, short color);
 void printPadding(int x, int y, int length, int width, short color);
 void setColor(short color);
 void setFontSize();
+int getCursorX();
+int getCursorY();
 int getConsoleHeight();
 int getConsoleWidth();
 void consoleCursor(bool visibility);
+void stringSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
 int takeIntInput(string message);
@@ -95,10 +100,10 @@ int productInOrderQuantities[NoOfProducts];
 
 // login info
 #define NoOfUsers 20
-string usernames[NoOfUsers] = {"admin"};
-string passwords[NoOfUsers] = {"pass123"};
-int roles[NoOfUsers] = {0};
-int usersRegistered = 1;
+string usernames[NoOfUsers] = {"admin", "bro"};
+string passwords[NoOfUsers] = {"pass123", "12345678"};
+int roles[NoOfUsers] = {0, 1};
+int usersRegistered = 2;
 
 // Globals
 int consoleWidth;
@@ -132,6 +137,12 @@ void init()
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
     loadProducts();
+    stringSort(productNames, currentNumberOfProducts);
+    for (int i = 0; i < currentNumberOfProducts; i++)
+    {
+        cout << productNames[i] << endl;
+    }
+    halt();
 }
 void printTitle(string text, int paddng, short color)
 {
@@ -190,16 +201,16 @@ void printBill(int productsInOrderCount)
         productInOrderPrices[i] = productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
     }
     printLogo();
-    printStringColumn(2, 5, "Product", productsInOrderNames, productsInOrderCount, 20);
-    printIntColumn(30, 5, "Quantity", productInOrderQuantities, productsInOrderCount, 20);
-    printFloatColumn(45, 5, "Price", productInOrderPrices, productsInOrderCount, "Rs", 20);
+    printStringColumn(consoleWidth / 32, 5, "Product", productsInOrderNames, productsInOrderCount, 5 * consoleWidth / 32);
+    printIntColumn(17 * consoleWidth / 32, 5, "Quantity", productInOrderQuantities, productsInOrderCount, consoleWidth / 32);
+    printFloatColumn(27 * consoleWidth / 32, 5, "Price", productInOrderPrices, productsInOrderCount, " Rs", consoleWidth / 32);
 
     // gotoxy(0, 22);
     cout << endl;
     if (takeYesNoQuestion("Order confirmed"))
     {
         setColor(0xa);
-        cout << "Price payable: " << calculateTotalPayable(productsInOrderCount) << "Rs" << endl;
+        cout << "Price payable: " << calculateTotalPayable(productsInOrderCount) << " Rs" << endl;
         getch();
         setColor(0x7);
     }
@@ -225,7 +236,7 @@ void printStringColumn(int x, int y, string title, string items[], int arraySize
     setColor(0x6);
     for (int i = 0; i < arraySize; i++)
     {
-        gotoxy(x + (title.length() + (padding * 2) - items[i].length()) / 2, i + y + 2);
+        gotoxy(x, i + y + 2);
         cout << items[i];
         count++;
     }
@@ -263,7 +274,7 @@ void printCurrentMenuAndUserType(string menuName)
 {
     gotoxy(0, 3);
     cout << "  " << menuName;
-    gotoxy(80 - 20, 3);
+    gotoxy(24 * consoleWidth / 32, 3);
     cout << "User Type: ";
     if (role == 0)
     {
@@ -277,11 +288,42 @@ void printCurrentMenuAndUserType(string menuName)
     }
     gotoxy(0, 4);
     setColor(0x02);
-    for (int i = 0; i < 80; i++)
+    for (int i = 0; i < consoleWidth; i++)
     {
         cout << "_";
     }
     gotoxy(0, 5);
+}
+void swapProduct(int firstProductIndex, int secondProductIndex)
+{
+    string tempProductName = productNames[firstProductIndex];
+    int tempProductQuantity = productQuantity[firstProductIndex];
+    float tempProductCostPrice = productCostPrice[firstProductIndex];
+    float tempProductRetailPrice = productRetailPrice[firstProductIndex];
+    float tempProductProfitPercentage = productProfitPercentage[firstProductIndex];
+    productNames[firstProductIndex] = productNames[secondProductIndex];
+    productQuantity[firstProductIndex] = productQuantity[secondProductIndex];
+    productCostPrice[firstProductIndex] = productCostPrice[secondProductIndex];
+    productRetailPrice[firstProductIndex] = productRetailPrice[secondProductIndex];
+    productProfitPercentage[firstProductIndex] = productProfitPercentage[secondProductIndex];
+    productNames[secondProductIndex] = tempProductName;
+    productQuantity[secondProductIndex] = tempProductQuantity;
+    productCostPrice[secondProductIndex] = tempProductCostPrice;
+    productRetailPrice[secondProductIndex] = tempProductRetailPrice;
+    productProfitPercentage[secondProductIndex] = tempProductProfitPercentage;
+}
+void stringSort(string arr[], int arraysize)
+{
+    for (int i = 0; i < arraysize; i++)
+    {
+        for (int j = 0; j < arraysize - 1; j++)
+        {
+            if (arr[j] > arr[i])
+            {
+                swapProduct(i, j);
+            }
+        }
+    }
 }
 string takeStringInput(string message)
 {
@@ -372,6 +414,8 @@ int searchIndex(string data, string array[], int arraySize)
 }
 void errorDisplay(string error)
 {
+    int x = getCursorX();
+    int y = getCursorY();
     setColor(0xc);
     cout << "Error:";
     setColor(0xe);
@@ -379,6 +423,9 @@ void errorDisplay(string error)
     setColor(0x7);
     cout << "Press any key to continue..." << endl;
     getch();
+    gotoxy(x, y);
+    cout << endl
+         << endl;
     cin.clear();
     cin.sync();
 }
@@ -416,10 +463,11 @@ void viewNetProfit()
 void storeProducts()
 {
     fstream file;
+    char c255 = 255;
     file.open("products.txt", ios::out);
     for (int i = 0; i < currentNumberOfProducts; i++)
     {
-        file << productNames[i] << EnumDisplayDevicesW;
+        file << productNames[i] << endl;
         file << productCostPrice[i] << endl;
         file << productQuantity[i] << endl;
         file << productProfitPercentage[i] << endl;
@@ -430,15 +478,16 @@ void loadProducts()
 {
     fstream file;
     file.open("products.txt", ios::in);
+    int i = 0;
     if (file)
     {
-        int i = 0;
         while (!file.eof())
         {
             getline(file >> ws, productNames[i]);
             file >> productCostPrice[i];
             file >> productQuantity[i];
             file >> productProfitPercentage[i];
+            productRetailPrice[i] = productCostPrice[i] * (100 + productProfitPercentage[i]) / 100;
             i++;
         }
         file.close();
@@ -449,16 +498,16 @@ void loadProducts()
 void productList()
 {
     printLogo();
-    printStringColumn(consoleWidth / 32, consoleHeight / 5, "product", productNames, currentNumberOfProducts, consoleWidth / 32);
-    printIntColumn(9 * consoleWidth / 32, consoleHeight / 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
+    printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
+    printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
     if (role == 0)
     {
-        printFloatColumn(19 * consoleWidth / 32, consoleHeight / 5, "cost Price", productCostPrice, currentNumberOfProducts, "Rs", consoleWidth / 32);
-        printFloatColumn(27 * consoleWidth / 32, consoleHeight / 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
+        printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
+        printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
     }
     else
     {
-        printFloatColumn(19 * consoleWidth / 32, consoleHeight / 5, "Retail price", productRetailPrice, currentNumberOfProducts, "Rs", consoleWidth / 32);
+        printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
     }
     cin.sync();
 }
@@ -532,7 +581,7 @@ void productRemove()
         currentNumberOfProducts--;
     }
 }
-void processNewOrder()
+/*void processNewOrder()
 {
     string product;
     int productsInOrderCount = 0;
@@ -555,6 +604,11 @@ void processNewOrder()
         }
         quantity = takeIntInput("quantity");
         if (quantity < 0)
+        {
+            errorDisplay("quantity cannot be negetive!");
+            continue;
+        }
+        else if (quantity == 0)
         {
             errorDisplay("quantity cannot be negetive!");
             continue;
@@ -583,6 +637,62 @@ void processNewOrder()
         running = takeYesNoQuestion("Another item");
     }
     printBill(productsInOrderCount);
+}*/
+void processNewOrder()
+{
+    int productsInOrderCount = 0;
+    int quantity;
+    int productInOrderIndex = -1;
+    bool running = true;
+    double pricePayable = 0;
+    int option;
+    while (running)
+    {
+        productList();
+        int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
+
+        quantity = processProductQuantity(productLocation);
+        productInOrderIndex = searchIndex(productNames[productLocation], productsInOrderNames, productsInOrderCount);
+        if (productInOrderIndex == -1)
+        {
+            productsInOrderNames[productsInOrderCount] = productNames[productLocation];
+            productInOrderQuantities[productsInOrderCount] = quantity;
+            productsInOrderCount++;
+        }
+        else if (productQuantity[productLocation] < (productInOrderQuantities[productInOrderIndex] + quantity))
+        {
+            errorDisplay("not enough quantity present in inventory!");
+            continue;
+        }
+        else
+        {
+            productInOrderQuantities[productInOrderIndex] += quantity;
+        }
+        running = takeYesNoQuestion("Another item");
+    }
+    printBill(productsInOrderCount);
+}
+int processProductQuantity(int productLocation)
+{
+    printLogo();
+    int quantity = takeIntInput("Quantity of product");
+    if (quantity < 0)
+    {
+        errorDisplay("quantity cannot be negetive!");
+    }
+    else if (quantity == 0)
+    {
+        return 0;
+    }
+    else if (quantity > productQuantity[productLocation])
+    {
+        errorDisplay("not enough quantity present in inventory!");
+    }
+    else
+    {
+        return quantity;
+    }
+    return -1;
 }
 void productUpdateHandle(int choice, int productLocation)
 {
@@ -722,9 +832,9 @@ void Login()
     printTitle("username", 1, 0x20);
     gotoxy(x, y + 1);
     printTitle("password", 1, 0x20);
-    printPadding(x + 10, y, consoleWidth / 3, 2, 0x60);
+    printPadding(x + 10, y, consoleWidth / 3, 2, 0x70);
     gotoxy(x + 11, y);
-    setColor(0x60);
+    setColor(0x70);
     getline(cin, username);
     gotoxy(x + 11, y + 1);
     getline(cin, password);
@@ -888,12 +998,24 @@ void gotoxy(int x, int y)
     coordinates.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinates);
 }
+int getCursorX()
+{
+    POINT point;
+    GetCursorPos(&point);
+    return point.x;
+}
+int getCursorY()
+{
+    POINT point;
+    GetCursorPos(&point);
+    return point.y;
+}
 string getStringAtxy(short int x, short int y)
 {
-    char buffer[80];
+    char buffer[consoleWidth];
     COORD position{x, y};
     DWORD dwChars;
-    ReadConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, 80, position, &dwChars);
+    ReadConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, consoleWidth, position, &dwChars);
     buffer[dwChars] = '\0';
     string temp = buffer;
     return temp;
