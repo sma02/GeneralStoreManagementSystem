@@ -138,11 +138,6 @@ void init()
     consoleHeight = getConsoleHeight();
     loadProducts();
     stringSort(productNames, currentNumberOfProducts);
-    for (int i = 0; i < currentNumberOfProducts; i++)
-    {
-        cout << productNames[i] << endl;
-    }
-    halt();
 }
 void printTitle(string text, int paddng, short color)
 {
