@@ -826,8 +826,8 @@ void Login()
     string username, password;
     printLogo();
     cin.sync();
-    int x = consoleWidth / 4;
-    int y = consoleHeight / 2;
+    int x = 10*consoleWidth / 32;
+    int y = 16*consoleHeight / 32;
     gotoxy(x, y);
     printTitle("username", 1, 0x20);
     gotoxy(x, y + 1);
