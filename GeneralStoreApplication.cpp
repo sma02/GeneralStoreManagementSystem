@@ -137,7 +137,6 @@ void init()
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
     loadProducts();
-    stringSort(productNames, currentNumberOfProducts);
 }
 void printTitle(string text, int paddng, short color)
 {
@@ -245,7 +244,7 @@ void printIntColumn(int x, int y, string title, int items[], int arraySize, int 
     setColor(0x6);
     for (int i = 0; i < arraySize; i++)
     {
-        gotoxy(x + (title.length() + padding) / 2, i + y + 2);
+        gotoxy(x - 1 + (title.length() + 2 * padding) / 2, i + y + 2);
         cout << items[i];
         count++;
     }
@@ -259,7 +258,7 @@ void printFloatColumn(int x, int y, string title, float items[], int arraySize, 
     setColor(0x6);
     for (int i = 0; i < arraySize; i++)
     {
-        gotoxy(x + (title.length() + padding) / 2, i + y + 2);
+        gotoxy(x - 1 + (title.length() + 2 * padding) / 2, i + y + 2);
         cout << items[i] << extraInfo;
         count++;
     }
@@ -547,6 +546,7 @@ void productAdd()
     productRetailPrice[currentNumberOfProducts] = costPrice * (100 + profitPercentage) / 100;
     productQuantity[currentNumberOfProducts] = quantity;
     currentNumberOfProducts++;
+    stringSort(productNames, currentNumberOfProducts);
 }
 void productRemove()
 {
@@ -821,8 +821,8 @@ void Login()
     string username, password;
     printLogo();
     cin.sync();
-    int x = 10*consoleWidth / 32;
-    int y = 16*consoleHeight / 32;
+    int x = 10 * consoleWidth / 32;
+    int y = 16 * consoleHeight / 32;
     gotoxy(x, y);
     printTitle("username", 1, 0x20);
     gotoxy(x, y + 1);
