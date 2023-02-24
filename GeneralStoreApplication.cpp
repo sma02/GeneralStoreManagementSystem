@@ -38,8 +38,10 @@ void errorEmptyString(string item);
 void errorLessThanZero(string item);
 void errorDisplay(string error);
 // file related functions
+void storeUsers();
 void storeProducts();
 void loadProducts();
+void loadUsers();
 // utilities
 void printTitle(string text, int paddng, short color);
 void printPadding(int x, int y, int length, int width, short color);
@@ -53,6 +55,7 @@ void consoleCursor(bool visibility);
 void stringSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
+string parseData(string line, int fieldNumber);
 int takeIntInput(string message);
 bool isValidIntInput(int input);
 bool isValidFloatInput(float input);
@@ -100,10 +103,10 @@ int productInOrderQuantities[NoOfProducts];
 
 // login info
 #define NoOfUsers 20
-string usernames[NoOfUsers] = {"admin", "bro"};
-string passwords[NoOfUsers] = {"pass123", "12345678"};
-int roles[NoOfUsers] = {0, 1};
-int usersRegistered = 2;
+string usernames[NoOfUsers];
+string passwords[NoOfUsers];
+int roles[NoOfUsers];
+int usersRegistered = 0;
 
 // Globals
 int consoleWidth;
@@ -136,6 +139,14 @@ void init()
     consoleCursor(false);
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
+    loadUsers();
+    if (usersRegistered == 0)
+    {
+        usernames[0] = "default";
+        passwords[0] = "something";
+        roles[0] = 0;
+        usersRegistered++;
+    }
     loadProducts();
 }
 void printTitle(string text, int paddng, short color)
@@ -454,7 +465,7 @@ void viewNetProfit()
     getch();
 }
 // file related function
-void storeProducts()
+/*void storeProducts()
 {
     fstream file;
     char c255 = 255;
@@ -467,26 +478,115 @@ void storeProducts()
         file << productProfitPercentage[i] << endl;
     }
     file.close();
+}*/
+void storeUsers()
+{
+    fstream file;
+    file.open("users.txt", ios::out);
+    if (file)
+    {
+        for (int i = 0; i < usersRegistered; i++)
+        {
+            file << usernames[i] << ',';
+            file << passwords[i] << ',';
+            if (roles[i])
+            {
+                file << "cashier";
+            }
+            else
+            {
+                file << "admin";
+            }
+            file << endl;
+        }
+    }
+    file.close();
+}
+void storeProducts()
+{
+    fstream file;
+    file.open("products.txt", ios::out);
+    if (file)
+    {
+        for (int i = 0; i < currentNumberOfProducts; i++)
+        {
+            file << productNames[i] << ',';
+            file << productCostPrice[i] << ',';
+            file << productQuantity[i] << ',';
+            file << productProfitPercentage[i] << endl;
+        }
+    }
+    file.close();
+}
+void loadUsers()
+{
+    fstream file;
+    string temp;
+    file.open("users.txt", ios::in);
+    while (getline(file, temp))
+    {
+        usernames[usersRegistered] = parseData(temp, 1);
+        passwords[usersRegistered] = parseData(temp, 2);
+        if (parseData(temp, 3) == "admin")
+        {
+            roles[usersRegistered] = 0;
+        }
+        else
+        {
+            roles[usersRegistered] = 1;
+        }
+        usersRegistered++;
+    }
 }
 void loadProducts()
 {
     fstream file;
+    string temp;
     file.open("products.txt", ios::in);
-    int i = 0;
-    if (file)
+    while (getline(file, temp))
     {
-        while (!file.eof())
+        productNames[currentNumberOfProducts] = parseData(temp, 1);
+        productCostPrice[currentNumberOfProducts] = stof(parseData(temp, 2));
+        productQuantity[currentNumberOfProducts] = stoi(parseData(temp, 3));
+        productProfitPercentage[currentNumberOfProducts] = stof(parseData(temp, 4));
+        productRetailPrice[currentNumberOfProducts] = productCostPrice[currentNumberOfProducts] * (100 + productProfitPercentage[currentNumberOfProducts]) / 100;
+        currentNumberOfProducts++;
+    }
+    file.close();
+}
+string parseData(string line, int fieldNumber)
+{
+    int initialPos = 0;
+    int finalPos = 0;
+    int fieldCount = 0;
+    string result = "";
+    for (int i = 0; i < line.length(); i++)
+    {
+        if (line[i] == ',')
         {
-            getline(file >> ws, productNames[i]);
-            file >> productCostPrice[i];
-            file >> productQuantity[i];
-            file >> productProfitPercentage[i];
-            productRetailPrice[i] = productCostPrice[i] * (100 + productProfitPercentage[i]) / 100;
-            i++;
+            fieldCount++;
+            if (fieldNumber != fieldCount)
+            {
+                initialPos = i + 1;
+            }
+            else
+            {
+                finalPos = i;
+            }
         }
-        file.close();
-        i--;
-        currentNumberOfProducts = i;
+        else if (i == line.length() - 1)
+        {
+            fieldCount++;
+            finalPos = i + 1;
+        }
+        if (fieldNumber == fieldCount)
+        {
+            for (int j = initialPos; j < finalPos; j++)
+            {
+                result += line[j];
+            }
+            return result;
+        }
     }
 }
 void productList()
@@ -557,11 +657,13 @@ void productRemove()
     if (product == "")
     {
         errorEmptyString("name of product");
+        return;
     }
     productLocation = searchIndex(product, productNames, currentNumberOfProducts);
     if (productLocation == -1)
     {
         errorDisplay("product does not exist!");
+        return;
     }
     else
     {
@@ -734,6 +836,7 @@ void productUpdateHandle(int choice, int productLocation)
         }
         productQuantity[productLocation] = quantity;
     }
+    storeProducts();
 }
 void handleCashier()
 {
@@ -892,6 +995,7 @@ void addUser()
     usernames[usersRegistered] = username;
     passwords[usersRegistered] = password;
     usersRegistered++;
+    storeUsers();
 }
 void removeUser()
 {
@@ -918,6 +1022,7 @@ void removeUser()
             roles[i] = roles[i + 1];
         }
         usersRegistered--;
+        storeUsers();
     }
 }
 int takeChoice(int offset, int size, short color)

@@ -4,3 +4,5 @@ build.bat
 .vscode/launch.json
 .vscode/tasks.json
 .vscode/settings.json
+users.txt
+products.txt
