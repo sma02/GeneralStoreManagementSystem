@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iosfwd>
 #include <fstream>
 #include <windows.h>
 #include <conio.h>
@@ -34,9 +35,9 @@ void handleAdmin();
 void handleCashier();
 void processAdmin(int choice);
 void processCashier(int choice);
-void errorEmptyString(string item);
-void errorLessThanZero(string item);
-void errorDisplay(string error);
+bool errorEmptyString(string item);
+bool errorLessThanZero(string item);
+bool errorDisplay(string error);
 // file related functions
 void storeUsers();
 void storeProducts();
@@ -52,7 +53,7 @@ int getCursorY();
 int getConsoleHeight();
 int getConsoleWidth();
 void consoleCursor(bool visibility);
-void stringSort(string arr[], int arraysize);
+void ProductSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
 string parseData(string line, int fieldNumber);
@@ -65,6 +66,7 @@ bool isPresent(string data, string array[], int arraySize);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
 void movePointer(int previousPos, int pointerPos, int offset, short color);
+void eraseInput(int initialVerticalPos);
 
 // string menus
 string adminMenu[] = {
@@ -151,14 +153,14 @@ void init()
 }
 void printTitle(string text, int paddng, short color)
 {
-    setColor((color / 16 % 16) + color);
+    setColor((color/16%16)*17);
     for (int i = 0; i < paddng; i++)
     {
         cout << "*";
     }
     setColor(color);
     cout << text;
-    setColor((color / 16 % 16) + color);
+    setColor((color/16%16)*17);
     for (int i = 0; i < paddng; i++)
     {
         cout << "*";
@@ -317,7 +319,7 @@ void swapProduct(int firstProductIndex, int secondProductIndex)
     productRetailPrice[secondProductIndex] = tempProductRetailPrice;
     productProfitPercentage[secondProductIndex] = tempProductProfitPercentage;
 }
-void stringSort(string arr[], int arraysize)
+void ProductSort(string arr[], int arraysize)
 {
     for (int i = 0; i < arraysize; i++)
     {
@@ -330,54 +332,99 @@ void stringSort(string arr[], int arraysize)
         }
     }
 }
+void eraseInput(int initialVerticalPos)
+{
+    int finalVerticalPos = getCursorY();
+    setColor(0);
+    gotoxy(0, initialVerticalPos);
+    for (int i = initialVerticalPos; i < finalVerticalPos; i++)
+    {
+        cout << getStringAtxy(0, i);
+    }
+    gotoxy(0, initialVerticalPos);
+}
 string takeStringInput(string message)
 {
-    string input;
-    setColor(0x2);
-    consoleCursor(true);
-    cout << "Enter the " << message << ": ";
-    setColor(0x6);
-    cin.sync();
-    getline(cin, input);
-    cin.sync();
-    setColor(0x7);
-    consoleCursor(false);
+    int y = getCursorY();
+    string input = "";
+    while (input == "")
+    {
+        setColor(0x2);
+        consoleCursor(true);
+        cout << "Enter the " << message << ": ";
+        setColor(0x6);
+        cin.sync();
+        getline(cin, input);
+        cin.sync();
+        setColor(0x7);
+        consoleCursor(false);
+        if (input == "")
+        {
+            if (errorEmptyString(message))
+            {
+                return "";
+            }
+            eraseInput(y);
+        }
+    }
     return input;
 }
 int takeIntInput(string message)
 {
     int input;
-    setColor(0x2);
-    consoleCursor(true);
-    cout << "Enter the " << message << ": ";
-    setColor(0x6);
-    if (!(cin >> input))
+    int y = getCursorY();
+    while (1)
     {
-        cin.ignore();
-        input = -1;
+        setColor(0x2);
+        consoleCursor(true);
+        cout << "Enter the " << message << ": ";
+        setColor(0x6);
+        if (!(cin >> input) || input < 0)
+        {
+            cin.ignore();
+            if (errorLessThanZero(message))
+            {
+                consoleCursor(false);
+                return -1;
+            }
+            eraseInput(y);
+            continue;
+        }
+
+        return input;
+        setColor(0x7);
+        consoleCursor(false);
     }
-    setColor(0x7);
-    consoleCursor(false);
-    return input;
 }
 float takeFloatInput(string message)
 {
     float input;
-    setColor(0x2);
-    consoleCursor(true);
-    cout << "Enter the " << message << ": ";
-    setColor(0x6);
-    if (!(cin >> input))
+    int y = getCursorY();
+    while (1)
     {
-        cin.ignore();
-        input = -1;
+        setColor(0x2);
+        consoleCursor(true);
+        cout << "Enter the " << message << ": ";
+        setColor(0x6);
+        if (!(cin >> input) || input < 0)
+        {
+            cin.ignore();
+            if (errorLessThanZero(message))
+            {
+                consoleCursor(false);
+                return -1;
+            }
+            eraseInput(y);
+            continue;
+        }
+        return input;
+        setColor(0x7);
+        consoleCursor(false);
     }
-    setColor(0x7);
-    consoleCursor(false);
-    return input;
 }
 bool takeYesNoQuestion(string message)
 {
+  //  printPadding(8*consoleWidth/32,24*consoleHeight/32,16*consoleWidth/32,4*consoleHeight/32,0x10);
     int option;
     setColor(0x3);
     cout << message << "?[press Y or N]: " << endl;
@@ -417,8 +464,9 @@ int searchIndex(string data, string array[], int arraySize)
     }
     return -1;
 }
-void errorDisplay(string error)
+bool errorDisplay(string error)
 {
+    int key = 0;
     int x = getCursorX();
     int y = getCursorY();
     setColor(0xc);
@@ -426,23 +474,31 @@ void errorDisplay(string error)
     setColor(0xe);
     cout << error << endl;
     setColor(0x7);
-    cout << "Press any key to continue..." << endl;
-    getch();
-    gotoxy(x, y);
-    cout << endl
-         << endl;
     cin.clear();
     cin.sync();
+    cout << "Press Enter to continue or Escape to abort operation..." << endl;
+    while (1)
+    {
+        key = getch();
+        if (key == VK_RETURN)
+        {
+            return false;
+        }
+        if (key == VK_ESCAPE)
+        {
+            return true;
+        }
+    }
 }
-void errorLessThanZero(string item)
+bool errorLessThanZero(string item)
 {
     string actualError = "Invalid input for " + item;
-    errorDisplay(actualError);
+    return errorDisplay(actualError);
 }
-void errorEmptyString(string item)
+bool errorEmptyString(string item)
 {
     string actualError = item + " cannot be empty!";
-    errorDisplay(actualError);
+    return errorDisplay(actualError);
 }
 void halt()
 {
@@ -613,40 +669,32 @@ void productAdd()
     printCurrentMenuAndUserType("Main Menu>Product Add");
     string productName = takeStringInput("name of product");
     if (productName == "")
-    {
-        errorEmptyString("product name");
         return;
-    }
-    else if (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
+    while (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
     {
-        errorDisplay("product already exists!");
-        return;
+        if (errorDisplay("product already exists!"))
+            return;
+        eraseInput(getCursorY() - 3);
+        productName = takeStringInput("name of product");
+        if (productName == "")
+            return;
     }
     float costPrice = takeFloatInput("unit cost price");
     if (costPrice < 0)
-    {
-        errorLessThanZero("cost price");
         return;
-    }
-    float profitPercentage = takeFloatInput("percentage of profit desired on product");
+    float profitPercentage = takeFloatInput("profit percentage on product");
     if (profitPercentage < 0)
-    {
-        errorLessThanZero("profit percentage");
         return;
-    }
-    int quantity = takeIntInput("current quantity of product in inventory");
+    int quantity = takeIntInput("quantity of product in inventory");
     if (quantity < 0)
-    {
-        errorLessThanZero("quantity");
         return;
-    }
     productNames[currentNumberOfProducts] = productName;
     productCostPrice[currentNumberOfProducts] = costPrice;
     productProfitPercentage[currentNumberOfProducts] = profitPercentage;
     productRetailPrice[currentNumberOfProducts] = costPrice * (100 + profitPercentage) / 100;
     productQuantity[currentNumberOfProducts] = quantity;
     currentNumberOfProducts++;
-    stringSort(productNames, currentNumberOfProducts);
+    ProductSort(productNames, currentNumberOfProducts);
     storeProducts();
 }
 void productRemove()
@@ -654,31 +702,29 @@ void productRemove()
     int productLocation = -1;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Product Remove");
-    string product = takeStringInput("name of product to remove");
+    string product = takeStringInput("name of product");
     if (product == "")
-    {
-        errorEmptyString("name of product");
         return;
-    }
     productLocation = searchIndex(product, productNames, currentNumberOfProducts);
-    if (productLocation == -1)
+    while (productLocation == -1)
     {
-        errorDisplay("product does not exist!");
-        return;
+        if (errorDisplay("product does not exist!"))
+            return;
+        eraseInput(getCursorY() - 3);
+        product = takeStringInput("name of product");
+        if (product == "")
+            return;
     }
-    else
+    for (int i = productLocation; i < currentNumberOfProducts; i++)
     {
-        for (int i = productLocation; i < currentNumberOfProducts; i++)
-        {
-            productNames[i] = productNames[i + 1];
-            productCostPrice[i] = productCostPrice[i + 1];
-            productQuantity[i] = productQuantity[i + 1];
-            productProfitPercentage[i] = productProfitPercentage[i + 1];
-            productRetailPrice[i] = productRetailPrice[i + 1];
-        }
-        currentNumberOfProducts--;
-        storeProducts();
+        productNames[i] = productNames[i + 1];
+        productCostPrice[i] = productCostPrice[i + 1];
+        productQuantity[i] = productQuantity[i + 1];
+        productProfitPercentage[i] = productProfitPercentage[i + 1];
+        productRetailPrice[i] = productRetailPrice[i + 1];
     }
+    currentNumberOfProducts--;
+    storeProducts();
 }
 /*void processNewOrder()
 {
@@ -798,20 +844,17 @@ void productUpdateHandle(int choice, int productLocation)
     printLogo();
     if (choice == 0)
     {
-        string productName = takeStringInput("new product name");
+        string productName = takeStringInput("product name");
         if (productName == "")
-        {
-            errorDisplay("product name cannot be empty");
             return;
-        }
         productNames[productLocation] = productName;
+        ProductSort(productNames,currentNumberOfProducts);
     }
     else if (choice == 1)
     {
-        float costPrice = takeFloatInput("new cost price");
-        if (costPrice <= 0)
+        float costPrice = takeFloatInput("cost price");
+        if (costPrice < 0)
         {
-            errorDisplay("invalid cost price");
             return;
         }
         productCostPrice[productLocation] = costPrice;
@@ -819,10 +862,9 @@ void productUpdateHandle(int choice, int productLocation)
     }
     else if (choice == 2)
     {
-        float profitPercentage = takeFloatInput("new profit percentage");
+        float profitPercentage = takeFloatInput("profit percentage");
         if (profitPercentage < 0)
         {
-            errorDisplay("invalid profit percentage");
             return;
         }
         productProfitPercentage[productLocation] = profitPercentage;
@@ -830,12 +872,9 @@ void productUpdateHandle(int choice, int productLocation)
     }
     else if (choice == 3)
     {
-        int quantity = takeIntInput("new product quantity");
+        int quantity = takeIntInput("product quantity");
         if (quantity < 0)
-        {
-            errorDisplay("quantity of product cannot be negetive");
             return;
-        }
         productQuantity[productLocation] = quantity;
     }
     storeProducts();
@@ -928,11 +967,12 @@ void Login()
     cin.sync();
     int x = 10 * consoleWidth / 32;
     int y = 16 * consoleHeight / 32;
+    printPadding(7*consoleWidth/32, 9*consoleHeight/32, 19*consoleWidth /32, 16*consoleHeight/32, 0x30);
     gotoxy(x, y);
-    printTitle("username", 1, 0x20);
+    printTitle("username", 1, 0x27);
     gotoxy(x, y + 1);
-    printTitle("password", 1, 0x20);
-    printPadding(x + 10, y, consoleWidth / 3, 2, 0x70);
+    printTitle("password", 1, 0x27);
+    printPadding(x + 10, y, 11*consoleWidth / 32, 2, 0x70);
     gotoxy(x + 11, y);
     setColor(0x70);
     getline(cin, username);
@@ -1102,23 +1142,23 @@ void gotoxy(int x, int y)
 }
 int getCursorX()
 {
-    POINT point;
-    GetCursorPos(&point);
-    return point.x;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.dwCursorPosition.X;
 }
 int getCursorY()
 {
-    POINT point;
-    GetCursorPos(&point);
-    return point.y;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.dwCursorPosition.Y;
 }
 string getStringAtxy(short int x, short int y)
 {
-    char buffer[consoleWidth];
+    char buffer[consoleWidth+1];
     COORD position{x, y};
     DWORD dwChars;
     ReadConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, consoleWidth, position, &dwChars);
-    buffer[dwChars] = '\0';
+    buffer[consoleWidth] = '\0';
     string temp = buffer;
     return temp;
 }
