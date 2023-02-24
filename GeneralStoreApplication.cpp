@@ -647,6 +647,7 @@ void productAdd()
     productQuantity[currentNumberOfProducts] = quantity;
     currentNumberOfProducts++;
     stringSort(productNames, currentNumberOfProducts);
+    storeProducts();
 }
 void productRemove()
 {
@@ -676,6 +677,7 @@ void productRemove()
             productRetailPrice[i] = productRetailPrice[i + 1];
         }
         currentNumberOfProducts--;
+        storeProducts();
     }
 }
 /*void processNewOrder()
