@@ -28,6 +28,7 @@ void productList();
 int processProductQuantity(int productLocation);
 void productUpdateHandle(int choice, int productLocation);
 void processNewOrder();
+void handleUserManagement();
 void halt();
 void viewNetProfit();
 void gotoxy(int x, int y);
@@ -36,6 +37,7 @@ void handleAdmin();
 void handleCashier();
 void processAdmin(int choice);
 void processCashier(int choice);
+void processUserManagement(int choice);
 bool errorEmptyString(string item);
 bool errorLessThanZero(string item);
 bool errorDisplay(string error);
@@ -65,6 +67,7 @@ int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
 void movePointer(int previousPos, int pointerPos, int offset, short color);
 void eraseInput(int initialVerticalPos);
+string getline(string &str);
 
 // string menus
 string adminMenu[] = {
@@ -72,8 +75,7 @@ string adminMenu[] = {
     "Add a product",
     "remove a product",
     "update quantity of a product",
-    "add a user",
-    "remove a user",
+    "User Management",
     "view net profit",
     "logout..."};
 
@@ -88,6 +90,13 @@ string productEditMenu[] = {
     "update cost price",
     "update profit percentage needed",
     "update quantity in inventory",
+    "back..."};
+
+string userManageMenu[] = {
+    "View All users",
+    "Add a user",
+    "remove a user",
+    "change password for your account",
     "back..."};
 // Products
 #define NoOfProducts 100
@@ -106,7 +115,7 @@ int productInOrderQuantities[NoOfProducts];
 #define NoOfUsers 20
 string usernames[NoOfUsers];
 string passwords[NoOfUsers];
-int roles[NoOfUsers];
+string roles[NoOfUsers];
 int usersRegistered = 0;
 
 // Globals
@@ -115,7 +124,7 @@ int consoleHeight;
 bool someoneLoggedIn = false;
 string currentUser = "";
 string currentUserPassword = "";
-int role = -1;
+string role = "";
 double netProfit = 0;
 int main()
 {
@@ -126,11 +135,11 @@ int main()
         {
             Login();
         }
-        while (role == 0)
+        while (role == "admin")
         {
             handleAdmin();
         }
-        while (role == 1)
+        while (role == "cashier")
         {
             handleCashier();
         }
@@ -146,7 +155,7 @@ void init()
     {
         usernames[0] = "default";
         passwords[0] = "something";
-        roles[0] = 0;
+        roles[0] = "admin";
         usersRegistered++;
     }
     loadProducts();
@@ -283,7 +292,7 @@ void printCurrentMenuAndUserType(string menuName)
     cout << "  " << menuName;
     gotoxy(24 * consoleWidth / 32, 3);
     cout << "User Type: ";
-    if (role == 0)
+    if (role == "admin")
     {
         setColor(0x4);
         cout << "Admin";
@@ -354,10 +363,14 @@ string takeStringInput(string message)
         cout << "Enter the " << message << ": ";
         setColor(0x6);
         cin.sync();
-        getline(cin, input);
+        getline(cin,input);
         cin.sync();
         setColor(0x7);
         consoleCursor(false);
+        /*if(input=="__Exit")
+        {
+            return "";
+        }*/
         if (input == "")
         {
             if (errorEmptyString(message))
@@ -545,14 +558,7 @@ void storeUsers()
         {
             file << usernames[i] << ',';
             file << passwords[i] << ',';
-            if (roles[i])
-            {
-                file << "cashier";
-            }
-            else
-            {
-                file << "admin";
-            }
+            file << roles[i];
             file << endl;
         }
     }
@@ -583,14 +589,7 @@ void loadUsers()
     {
         usernames[usersRegistered] = parseData(temp, 1);
         passwords[usersRegistered] = parseData(temp, 2);
-        if (parseData(temp, 3) == "admin")
-        {
-            roles[usersRegistered] = 0;
-        }
-        else
-        {
-            roles[usersRegistered] = 1;
-        }
+        roles[usersRegistered] = parseData(temp, 3);
         usersRegistered++;
     }
 }
@@ -650,7 +649,7 @@ void productList()
     printLogo();
     printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
     printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
-    if (role == 0)
+    if (role == "admin")
     {
         printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
         printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
@@ -659,7 +658,12 @@ void productList()
     {
         printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
     }
-    cin.sync();
+}
+void usersList()
+{
+    printLogo();
+    printStringColumn(consoleWidth / 32, 5, "Username", usernames, usersRegistered, 5 * consoleWidth / 32);
+    printStringColumn(16 * consoleWidth / 32, 5, "Role", roles, usersRegistered, 1 * consoleWidth / 32);
 }
 void productAdd()
 {
@@ -668,7 +672,7 @@ void productAdd()
     int quantity;
     int count = 0;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Product Add");
+    printCurrentMenuAndUserType("Main Menu>Users Management>Product Add");
     while (1)
     {
         productName = takeStringInput("name of product");
@@ -718,7 +722,7 @@ void productRemove()
     string product;
     int productLocation = -1;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Product Remove");
+    printCurrentMenuAndUserType("Main Menu>Users Management>Product Remove");
     productLocation = searchIndex(product, productNames, currentNumberOfProducts);
     while (1)
     {
@@ -904,6 +908,43 @@ void productUpdateHandle(int choice, int productLocation)
     }
     storeProducts();
 }
+void handleUserManagement()
+{
+    int choice = 0;
+    while (choice != -1)
+    {
+        printLogo();
+        printCurrentMenuAndUserType("Main Menu>Users Management");
+        printMenuItems(5, userManageMenu, 5);
+
+        choice = takeChoice(5, 8, 0x3);
+        if (choice > 4)
+        {
+            choice = -1;
+        }
+        processUserManagement(choice);
+    }
+}
+void processUserManagement(int choice)
+{
+    if (choice == 0)
+    {
+        usersList();
+        getch();
+    }
+    else if (choice == 1)
+    {
+        addUser();
+    }
+    else if (choice == 2)
+    {
+        removeUser();
+    }
+    else if (choice == 3)
+    {
+        changePassword();
+    }
+}
 void handleCashier()
 {
     printLogo();
@@ -936,8 +977,8 @@ void handleAdmin()
 {
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
-    printMenuItems(5, adminMenu, 8);
-    int choice = takeChoice(5, 8, 0x3);
+    printMenuItems(5, adminMenu, 7);
+    int choice = takeChoice(5, 7, 0x3);
     processAdmin(choice);
 }
 void processAdmin(int choice)
@@ -961,17 +1002,13 @@ void processAdmin(int choice)
     }
     else if (choice == 4)
     {
-        addUser();
+        handleUserManagement();
     }
     else if (choice == 5)
     {
-        removeUser();
-    }
-    else if (choice == 6)
-    {
         viewNetProfit();
     }
-    else if (choice == 7)
+    else if (choice == 6)
     {
         storeProducts();
         logout();
@@ -1090,14 +1127,7 @@ void addUser()
     }
     usernames[usersRegistered] = username;
     passwords[usersRegistered] = password;
-    if (role == "admin")
-    {
-        roles[usersRegistered] = 0;
-    }
-    else if (role == "cashier")
-    {
-        roles[usersRegistered] = 1;
-    }
+    roles[usersRegistered] = role;
     usersRegistered++;
     storeUsers();
 }
@@ -1150,7 +1180,14 @@ void changePassword()
 {
     string password;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Change Password");
+    if (role == "admin")
+    {
+        printCurrentMenuAndUserType("Main Menu>User Management>Change Password");
+    }
+    else
+    {
+        printCurrentMenuAndUserType("Main Menu>Change Password");
+    }
     while (1)
     {
         password = takeStringInput("password");
@@ -1250,6 +1287,31 @@ void movePointer(int previousPos, int pointerPos, int offset, short color)
     setColor(0x30);
     gotoxy(0, pointerPos);
     cout << temp;
+}
+string getline(string &str)
+{
+    char c = 0;
+    while (1)
+    {
+        if (kbhit)
+        {
+            c = getch();
+            if (c == VK_ESCAPE)
+            {
+                str = "__Exit";
+                gotoxy(getCursorX(), getCursorY() + 1);
+                break;
+            }
+            cout << c;
+            str += c;
+        }
+        if (c == VK_RETURN)
+        {
+            gotoxy(getCursorX(), getCursorY() + 1);
+            break;
+        }
+    }
+    return str;
 }
 void gotoxy(int x, int y)
 {
