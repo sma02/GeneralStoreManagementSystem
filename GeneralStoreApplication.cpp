@@ -11,6 +11,7 @@ void init();
 void Login();
 void addUser();
 void removeUser();
+void changePassword();
 void printLogo();
 void printMenuItems(int offset, string items[], int arraySize);
 void printCurrentMenuAndUserType(string menuName);
@@ -47,7 +48,6 @@ void loadUsers();
 void printTitle(string text, int paddng, short color);
 void printPadding(int x, int y, int length, int width, short color);
 void setColor(short color);
-void setFontSize();
 int getCursorX();
 int getCursorY();
 int getConsoleHeight();
@@ -58,8 +58,6 @@ string getStringAtxy(short int x, short int y);
 string takeStringInput(string message);
 string parseData(string line, int fieldNumber);
 int takeIntInput(string message);
-bool isValidIntInput(int input);
-bool isValidFloatInput(float input);
 float takeFloatInput(string message);
 bool takeYesNoQuestion(string message);
 bool isPresent(string data, string array[], int arraySize);
@@ -82,6 +80,7 @@ string adminMenu[] = {
 string cashierMenu[] = {
     "View list of products and their quantities",
     "New order",
+    "change password",
     "logout..."};
 
 string productEditMenu[] = {
@@ -115,6 +114,7 @@ int consoleWidth;
 int consoleHeight;
 bool someoneLoggedIn = false;
 string currentUser = "";
+string currentUserPassword = "";
 int role = -1;
 double netProfit = 0;
 int main()
@@ -153,14 +153,14 @@ void init()
 }
 void printTitle(string text, int paddng, short color)
 {
-    setColor((color/16%16)*17);
+    setColor((color / 16 % 16) * 17);
     for (int i = 0; i < paddng; i++)
     {
         cout << "*";
     }
     setColor(color);
     cout << text;
-    setColor((color/16%16)*17);
+    setColor((color / 16 % 16) * 17);
     for (int i = 0; i < paddng; i++)
     {
         cout << "*";
@@ -424,7 +424,7 @@ float takeFloatInput(string message)
 }
 bool takeYesNoQuestion(string message)
 {
-  //  printPadding(8*consoleWidth/32,24*consoleHeight/32,16*consoleWidth/32,4*consoleHeight/32,0x10);
+    //  printPadding(8*consoleWidth/32,24*consoleHeight/32,16*consoleWidth/32,4*consoleHeight/32,0x10);
     int option;
     setColor(0x3);
     cout << message << "?[press Y or N]: " << endl;
@@ -663,31 +663,47 @@ void productList()
 }
 void productAdd()
 {
-
+    string productName;
+    float costPrice, profitPercentage;
+    int quantity;
     int count = 0;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Product Add");
-    string productName = takeStringInput("name of product");
-    if (productName == "")
-        return;
-    while (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
+    while (1)
     {
-        if (errorDisplay("product already exists!"))
-            return;
-        eraseInput(getCursorY() - 3);
         productName = takeStringInput("name of product");
         if (productName == "")
+        {
             return;
+        }
+        else if (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
+        {
+            if (errorDisplay("product already exists!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
-    float costPrice = takeFloatInput("unit cost price");
+    costPrice = takeFloatInput("unit cost price");
     if (costPrice < 0)
+    {
         return;
-    float profitPercentage = takeFloatInput("profit percentage on product");
+    }
+    profitPercentage = takeFloatInput("profit percentage on product");
     if (profitPercentage < 0)
+    {
         return;
-    int quantity = takeIntInput("quantity of product in inventory");
+    }
+    quantity = takeIntInput("quantity of product in inventory");
     if (quantity < 0)
+    {
         return;
+    }
     productNames[currentNumberOfProducts] = productName;
     productCostPrice[currentNumberOfProducts] = costPrice;
     productProfitPercentage[currentNumberOfProducts] = profitPercentage;
@@ -699,21 +715,30 @@ void productAdd()
 }
 void productRemove()
 {
+    string product;
     int productLocation = -1;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Product Remove");
-    string product = takeStringInput("name of product");
-    if (product == "")
-        return;
     productLocation = searchIndex(product, productNames, currentNumberOfProducts);
-    while (productLocation == -1)
+    while (1)
     {
-        if (errorDisplay("product does not exist!"))
-            return;
-        eraseInput(getCursorY() - 3);
         product = takeStringInput("name of product");
         if (product == "")
+        {
             return;
+        }
+        else if (productLocation == -1)
+        {
+            if (errorDisplay("product does not exist!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
     for (int i = productLocation; i < currentNumberOfProducts; i++)
     {
@@ -848,7 +873,7 @@ void productUpdateHandle(int choice, int productLocation)
         if (productName == "")
             return;
         productNames[productLocation] = productName;
-        ProductSort(productNames,currentNumberOfProducts);
+        ProductSort(productNames, currentNumberOfProducts);
     }
     else if (choice == 1)
     {
@@ -883,8 +908,8 @@ void handleCashier()
 {
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
-    printMenuItems(5, cashierMenu, 3);
-    int choice = takeChoice(5, 3, 0x3);
+    printMenuItems(5, cashierMenu, 4);
+    int choice = takeChoice(5, 4, 0x3);
     processCashier(choice);
 }
 void processCashier(int choice)
@@ -899,6 +924,10 @@ void processCashier(int choice)
         processNewOrder();
     }
     else if (choice == 2)
+    {
+        changePassword();
+    }
+    else if (choice == 3)
     {
         logout();
     }
@@ -967,12 +996,12 @@ void Login()
     cin.sync();
     int x = 10 * consoleWidth / 32;
     int y = 16 * consoleHeight / 32;
-    printPadding(7*consoleWidth/32, 9*consoleHeight/32, 19*consoleWidth /32, 16*consoleHeight/32, 0x30);
+    printPadding(7 * consoleWidth / 32, 9 * consoleHeight / 32, 19 * consoleWidth / 32, 16 * consoleHeight / 32, 0x30);
     gotoxy(x, y);
     printTitle("username", 1, 0x27);
     gotoxy(x, y + 1);
     printTitle("password", 1, 0x27);
-    printPadding(x + 10, y, 11*consoleWidth / 32, 2, 0x70);
+    printPadding(x + 10, y, 11 * consoleWidth / 32, 2, 0x70);
     gotoxy(x + 11, y);
     setColor(0x70);
     getline(cin, username);
@@ -986,6 +1015,7 @@ void Login()
             if (password == passwords[i])
             {
                 currentUser = usernames[i];
+                currentUserPassword = passwords[i];
                 role = roles[i];
                 someoneLoggedIn = true;
             }
@@ -998,34 +1028,68 @@ void addUser()
     int freeLocation = 0;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Add User");
-    username = takeStringInput("username for new user");
-    if (username == "")
+    while (1)
     {
-        errorEmptyString("username");
-        return;
+        username = takeStringInput("username");
+        if (username == "")
+        {
+            return;
+        }
+        else if (isPresent(username, usernames, usersRegistered))
+        {
+            if (errorDisplay("Username already registered!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
-    else if (isPresent(username, usernames, usersRegistered))
+    while (1)
     {
-        errorDisplay("Username already registered!");
-        return;
+        password = takeStringInput("password");
+        if (password == "")
+        {
+            return;
+        }
+        else if (password.length() < 8)
+        {
+            if (errorDisplay("length of password cannot be less than 8!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
-    password = takeStringInput("password for user");
-    if (password == "")
+    while (1)
     {
-        errorEmptyString("password");
-        return;
+        role = takeStringInput("role for user");
+        if (role == "")
+        {
+            return;
+        }
+        else if ((role != "admin") && (role != "cashier"))
+        {
+            if (errorDisplay("role not found[role must be admin or cashier]!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
-    else if (password.length() < 8)
-    {
-        errorDisplay("length of password cannot be less than 8!");
-        return;
-    }
-    role = takeStringInput("role for user[admin or cashier]");
-    if ((role != "admin") && (role != "cashier"))
-    {
-        errorDisplay("role not found!");
-        return;
-    }
+    usernames[usersRegistered] = username;
+    passwords[usersRegistered] = password;
     if (role == "admin")
     {
         roles[usersRegistered] = 0;
@@ -1034,8 +1098,6 @@ void addUser()
     {
         roles[usersRegistered] = 1;
     }
-    usernames[usersRegistered] = username;
-    passwords[usersRegistered] = password;
     usersRegistered++;
     storeUsers();
 }
@@ -1045,27 +1107,83 @@ void removeUser()
     int userLocation = 0;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Remove User");
-    username = takeStringInput("username of the user to remove");
-    userLocation = searchIndex(username, usernames, usersRegistered);
-    if (username == currentUser)
+    while (1)
     {
-        errorDisplay("you cannont  delete your own account!");
-    }
-    else if (userLocation == -1)
-    {
-        errorDisplay("user does not exist!");
-    }
-    else
-    {
-        for (int i = userLocation; i < usersRegistered; i++)
+        username = takeStringInput("username");
+        if (username == "")
         {
-            usernames[i] = usernames[i + 1];
-            passwords[i] = passwords[i + 1];
-            roles[i] = roles[i + 1];
+            return;
         }
-        usersRegistered--;
-        storeUsers();
+        userLocation = searchIndex(username, usernames, usersRegistered);
+        if (username == currentUser)
+        {
+            if (errorDisplay("you cannot delete your own account!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else if (userLocation == -1)
+        {
+            if (errorDisplay("user does not exist!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
     }
+
+    for (int i = userLocation; i < usersRegistered; i++)
+    {
+        usernames[i] = usernames[i + 1];
+        passwords[i] = passwords[i + 1];
+        roles[i] = roles[i + 1];
+    }
+    usersRegistered--;
+    storeUsers();
+}
+void changePassword()
+{
+    string password;
+    printLogo();
+    printCurrentMenuAndUserType("Main Menu>Change Password");
+    while (1)
+    {
+        password = takeStringInput("password");
+        if (password == "")
+        {
+            return;
+        }
+        else if (password.length() < 8)
+        {
+            if (errorDisplay("length of assword cannot be less than 8!"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else if (password == currentUserPassword)
+        {
+            if (errorDisplay("your previous password cannot be your new password"))
+            {
+                return;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            break;
+        }
+    }
+    currentUserPassword = password;
+    int i = searchIndex(currentUser, usernames, usersRegistered);
+    passwords[i] = password;
+    storeUsers();
+    return;
 }
 int takeChoice(int offset, int size, short color)
 {
@@ -1154,7 +1272,7 @@ int getCursorY()
 }
 string getStringAtxy(short int x, short int y)
 {
-    char buffer[consoleWidth+1];
+    char buffer[consoleWidth + 1];
     COORD position{x, y};
     DWORD dwChars;
     ReadConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, consoleWidth, position, &dwChars);
