@@ -157,45 +157,6 @@ string role = "";
 string currentTime = "";
 double netProfit = 0;
 int totalProcessedOrdersCount = 0;
-void drawCashiersPerformaneGraph()
-{
-    int offset=5;
-    int cashierCount=0;
-    int scale=offset+15;
-    string cashiers[100];
-    int cashiersOrderCount[100];
-    printLogo();
-    for (int i = offset; i < scale; i++)
-    {
-        gotoxy(scale, i);
-        cout << "|";
-    }
-    for (int i = offset; i < scale*2; i++)
-    {
-        cout << "-";
-    }
-    for(int i=0;i<usersRegistered;i++)
-    {
-        
-        if(roles[i]=="cashier")
-        {
-            cashiers[cashierCount]=usernames[i];
-            cashiersOrderCount[cashierCount]=orderTakenByCashier[i];
-            cashierCount++;
-        }
-    }
-    for(int i=0;i<cashierCount;i++)
-    {
-        gotoxy(0,(i*scale/cashierCount)+offset);
-        cout<<cashiers[i];
-        gotoxy(scale+1,(i*scale/cashierCount)+offset);
-        for(int j=0;j<2*scale*cashiersOrderCount[i]/totalProcessedOrdersCount-1;j++)
-        {
-            cout<<'*';
-        }
-    }
-    getch();
-}
 int main()
 {
     init();
@@ -1183,6 +1144,57 @@ void processStats(int choice)
     {
         drawCashiersPerformaneGraph();
     }
+}
+void drawCashiersPerformaneGraph()
+{
+    int offset = 10;
+    int cashierCount = 0;
+    int scaleX = 16 * consoleWidth / 32;
+    int scaleY = 16 * consoleHeight / 32;
+    string cashiers[100];
+    int cashiersOrderCount[100];
+    char c254 = 254;
+    char c219 = 219;
+    char c245 = 245;
+    char c196 = 196;
+    printLogo();
+    int maxNameLength = 0;
+    for (int i = 0; i < usersRegistered; i++)
+    {
+
+        if (roles[i] == "cashier")
+        {
+            if (usernames[i].length() > maxNameLength)
+            {
+                maxNameLength = usernames[i].length();
+            }
+            cashiers[cashierCount] = usernames[i];
+            cashiersOrderCount[cashierCount] = orderTakenByCashier[i];
+            cashierCount++;
+        }
+    }
+    for (int i = offset; i < scaleY + offset; i++)
+    {
+        gotoxy(offset + maxNameLength, i);
+        cout << c245;
+    }
+    for (int i = offset; i < scaleX + offset; i++)
+    {
+        cout << c196;
+    }
+    setColor(0x3);
+    for (int i = 0; i < cashierCount; i++)
+    {
+        gotoxy(offset + maxNameLength - cashiers[i].length() - 1, (i * scaleY / cashierCount) + offset);
+        cout << cashiers[i];
+        gotoxy(offset + maxNameLength + 1, (i * scaleY / cashierCount) + offset);
+        for (int j = 0; j < scaleX * cashiersOrderCount[i] / totalProcessedOrdersCount; j++)
+        {
+            cout << c254;
+        }
+        cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
+    }
+    getch();
 }
 void processAdmin(int choice)
 {
