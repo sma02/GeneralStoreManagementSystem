@@ -157,6 +157,45 @@ string role = "";
 string currentTime = "";
 double netProfit = 0;
 int totalProcessedOrdersCount = 0;
+void drawCashiersPerformaneGraph()
+{
+    int offset=5;
+    int cashierCount=0;
+    int scale=offset+15;
+    string cashiers[100];
+    int cashiersOrderCount[100];
+    printLogo();
+    for (int i = offset; i < scale; i++)
+    {
+        gotoxy(scale, i);
+        cout << "|";
+    }
+    for (int i = offset; i < scale*2; i++)
+    {
+        cout << "-";
+    }
+    for(int i=0;i<usersRegistered;i++)
+    {
+        
+        if(roles[i]=="cashier")
+        {
+            cashiers[cashierCount]=usernames[i];
+            cashiersOrderCount[cashierCount]=orderTakenByCashier[i];
+            cashierCount++;
+        }
+    }
+    for(int i=0;i<cashierCount;i++)
+    {
+        gotoxy(0,(i*scale/cashierCount)+offset);
+        cout<<cashiers[i];
+        gotoxy(scale+1,(i*scale/cashierCount)+offset);
+        for(int j=0;j<2*scale*cashiersOrderCount[i]/totalProcessedOrdersCount-1;j++)
+        {
+            cout<<'*';
+        }
+    }
+    getch();
+}
 int main()
 {
     init();
@@ -1138,6 +1177,11 @@ void processStats(int choice)
     }
     else if (choice == 3)
     {
+    }
+
+    else if (choice == 4)
+    {
+        drawCashiersPerformaneGraph();
     }
 }
 void processAdmin(int choice)
