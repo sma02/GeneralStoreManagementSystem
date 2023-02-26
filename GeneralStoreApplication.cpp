@@ -227,6 +227,7 @@ void printBill(int productsInOrderCount)
     {
         setColor(0xa);
         cout << "Price payable: " << calculateTotalPayable(productsInOrderCount) << " Rs" << endl;
+        storeProducts();
         getch();
         setColor(0x7);
     }
@@ -363,7 +364,7 @@ string takeStringInput(string message)
         cout << "Enter the " << message << ": ";
         setColor(0x6);
         cin.sync();
-        getline(cin,input);
+        getline(cin, input);
         cin.sync();
         setColor(0x7);
         consoleCursor(false);
@@ -403,10 +404,9 @@ int takeIntInput(string message)
             eraseInput(y);
             continue;
         }
-
-        return input;
         setColor(0x7);
         consoleCursor(false);
+        return input;
     }
 }
 float takeFloatInput(string message)
@@ -430,9 +430,9 @@ float takeFloatInput(string message)
             eraseInput(y);
             continue;
         }
-        return input;
         setColor(0x7);
         consoleCursor(false);
+        return input;
     }
 }
 bool takeYesNoQuestion(string message)
@@ -917,8 +917,8 @@ void handleUserManagement()
         printCurrentMenuAndUserType("Main Menu>Users Management");
         printMenuItems(5, userManageMenu, 5);
 
-        choice = takeChoice(5, 8, 0x3);
-        if (choice > 4)
+        choice = takeChoice(5, 5, 0x3);
+        if (choice > 3)
         {
             choice = -1;
         }
@@ -1239,7 +1239,19 @@ int takeChoice(int offset, int size, short color)
     while (1)
     {
         key = getch();
-        if (GetAsyncKeyState(VK_UP) && pointerPos > 0)
+        if (GetAsyncKeyState(VK_UP) && pointerPos == 0)
+        {
+            previousPos = pointerPos;
+            pointerPos = size-1;
+            movePointer(previousPos, pointerPos, offset, color);
+        }
+        else if (GetAsyncKeyState(VK_DOWN) && pointerPos == size - 1)
+        {
+            previousPos = pointerPos;
+            pointerPos = 0;
+            movePointer(previousPos, pointerPos, offset, color);
+        }
+        else if (GetAsyncKeyState(VK_UP) && pointerPos > 0)
         {
             previousPos = pointerPos;
             pointerPos--;
