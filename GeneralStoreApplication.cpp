@@ -18,7 +18,9 @@ void printLogo();
 void printMenuItems(int offset, string items[], int arraySize);
 void printCurrentMenuAndUserType(string menuName);
 void printBill(int productsInOrderCount);
+void printSalesRecord();
 void printPricePayable(double pricePayable);
+void drawCashiersPerformanceGraph();
 void printStringColumn(int x, int y, string title, string items[], int arraySize, int padding);
 void printIntColumn(int x, int y, string title, int items[], int arraySize, int padding);
 void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo, int padding);
@@ -28,7 +30,7 @@ void swapProduct(int firstProductIndex, int secondProductIndex);
 void productAdd();
 void productRemove();
 void processProductManagement();
-void productList();
+void printProductList();
 int processProductQuantity(int productLocation);
 void productUpdateHandle(int choice, int productLocation);
 void processNewOrder();
@@ -51,10 +53,11 @@ bool errorDisplay(string error);
 void storeUsers();
 void storeProducts();
 void storeBasicStats();
-void storeRecord();
+void storeSalesRecord();
 void loadProducts();
 void loadUsers();
 void loadBasicStats();
+void loadSalesRecord();
 // utilities
 void printTitle(string text, int paddng, short color);
 void printPadding(int x, int y, int length, int width, short color);
@@ -82,7 +85,7 @@ string getCurrentDate();
 string getCurrentTime();
 string getCurrentDateAndTime();
 string getline(string &str);
-
+int getCurrentMinute();
 // string menus
 string adminMenu[] = {
     "View list of products and their quantites",
@@ -116,9 +119,9 @@ string userManageMenu[] = {
 string statsMenu[] = {
     "View net profit",
     "Relative Performace of cashiers",
-    "sales log",
+    "Sales record",
     "monthly sales graph",
-    "cashiers performance graph",
+    "Cashiers performance graph",
     "back..."};
 // Products
 #define NoOfProducts 100
@@ -142,10 +145,11 @@ int orderTakenByCashier[NoOfUsers];
 int usersRegistered = 0;
 
 // Record Variables
-string orderDateAndTime[100];
+string orderDate[100];
+string orderTime[100];
 string orderCashierUserName[100];
-double orderTotalCostPrice[100];
-double orderTotalSellPrice[100];
+float orderTotalCostPrice[100];
+float orderTotalSellPrice[100];
 int currentRecordCount = 0;
 // Globals
 int consoleWidth;
@@ -154,9 +158,9 @@ bool someoneLoggedIn = false;
 string currentUser = "";
 string currentUserPassword = "";
 string role = "";
-string currentTime = "";
+int currentMinute = 0;
 double netProfit = 0;
-int totalProcessedOrdersCount = 0;
+
 int main()
 {
     init();
@@ -179,7 +183,6 @@ int main()
 void init()
 {
     consoleCursor(false);
-    currentTime = getCurrentTime();
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
     loadUsers();
@@ -193,6 +196,7 @@ void init()
     }
     loadProducts();
     loadBasicStats();
+    loadSalesRecord();
 }
 void printDateAndTime()
 {
@@ -639,17 +643,17 @@ void storeBasicStats()
     if (file)
     {
         file << netProfit << endl;
-        file << totalProcessedOrdersCount << endl;
     }
     file.close();
 }
-void storeRecord()
+void storeSalesRecord()
 {
     fstream file;
     file.open("purchaseRecord.txt", ios::app);
     if (file)
     {
-        file << orderDateAndTime[currentRecordCount] << ',';
+        file << orderDate[currentRecordCount] << ',';
+        file << orderTime[currentRecordCount] << ',';
         file << orderCashierUserName[currentRecordCount] << ',';
         file << orderTotalCostPrice[currentRecordCount] << ',';
         file << orderTotalSellPrice[currentRecordCount] << endl;
@@ -702,8 +706,25 @@ void loadBasicStats()
     {
         getline(file, temp);
         netProfit = stod(temp);
-        getline(file, temp);
-        totalProcessedOrdersCount = stoi(temp);
+    }
+    file.close();
+}
+void loadSalesRecord()
+{
+    fstream file;
+    string temp;
+    file.open("purchaseRecord.txt", ios::in);
+    if (file)
+    {
+        while (getline(file, temp))
+        {
+            orderDate[currentRecordCount] = parseData(temp, 1);
+            orderTime[currentRecordCount] = parseData(temp, 2);
+            orderCashierUserName[currentRecordCount] = parseData(temp, 3);
+            orderTotalCostPrice[currentRecordCount] = stof(parseData(temp, 4));
+            orderTotalSellPrice[currentRecordCount] = stof(parseData(temp, 5));
+            currentRecordCount++;
+        }
     }
     file.close();
 }
@@ -742,7 +763,7 @@ string parseData(string line, int fieldNumber)
         }
     }
 }
-void productList()
+void printProductList()
 {
     printLogo();
     printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
@@ -920,7 +941,7 @@ void processNewOrder()
     int option;
     while (running)
     {
-        productList();
+        printProductList();
         int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
 
         quantity = processProductQuantity(productLocation);
@@ -949,7 +970,6 @@ void processNewOrder()
         double totalCostPrice = calculateTotalCostPrice(productsInOrderCount);
         addToRecord(totalCostPrice, pricePayable);
         printPricePayable(pricePayable);
-        totalProcessedOrdersCount++;
         storeProducts();
         storeBasicStats();
     }
@@ -958,11 +978,12 @@ void addToRecord(double totalCostPrice, double totalSellPrice)
 {
     int i = searchIndex(currentUser, usernames, usersRegistered);
     orderTakenByCashier[i]++;
-    orderDateAndTime[currentRecordCount] = getCurrentDateAndTime();
+    orderDate[currentRecordCount] = getCurrentDate();
+    orderTime[currentRecordCount] = getCurrentTime();
     orderCashierUserName[currentRecordCount] = currentUser;
     orderTotalCostPrice[currentRecordCount] = totalCostPrice;
     orderTotalSellPrice[currentRecordCount] = totalSellPrice;
-    storeRecord();
+    storeSalesRecord();
     storeUsers();
     currentRecordCount++;
 }
@@ -1084,7 +1105,7 @@ void processCashier(int choice)
 {
     if (choice == 0)
     {
-        productList();
+        printProductList();
         getch();
     }
     else if (choice == 1)
@@ -1135,6 +1156,8 @@ void processStats(int choice)
     }
     else if (choice == 2)
     {
+        printSalesRecord();
+        getch();
     }
     else if (choice == 3)
     {
@@ -1142,19 +1165,29 @@ void processStats(int choice)
 
     else if (choice == 4)
     {
-        drawCashiersPerformaneGraph();
+        drawCashiersPerformanceGraph();
+        getch();
     }
 }
-void drawCashiersPerformaneGraph()
+void printSalesRecord()
+{
+    printLogo();
+    printStringColumn(consoleWidth / 32, 5, "Date", orderDate, currentRecordCount, consoleWidth / 32);
+    printStringColumn(4 * consoleWidth / 32, 5, "Time", orderTime, currentRecordCount, consoleWidth / 32);
+    printStringColumn(15 * consoleWidth / 64, 5, "Cashier Name", orderCashierUserName, currentRecordCount, 3 * consoleWidth / 32);
+    printFloatColumn(18 * consoleWidth / 32, 5, "Total Cost Price", orderTotalCostPrice, currentRecordCount, " Rs", consoleWidth / 32);
+    printFloatColumn(25 * consoleWidth / 32, 5, "Total Sell Price", orderTotalSellPrice, currentRecordCount, " Rs", consoleWidth / 32);
+}
+void drawCashiersPerformanceGraph()
 {
     int offset = 10;
     int cashierCount = 0;
     int scaleX = 16 * consoleWidth / 32;
     int scaleY = 16 * consoleHeight / 32;
+    int totalProcessedOrdersCount = 0;
     string cashiers[100];
     int cashiersOrderCount[100];
     char c254 = 254;
-    char c219 = 219;
     char c245 = 245;
     char c196 = 196;
     printLogo();
@@ -1170,6 +1203,7 @@ void drawCashiersPerformaneGraph()
             }
             cashiers[cashierCount] = usernames[i];
             cashiersOrderCount[cashierCount] = orderTakenByCashier[i];
+            totalProcessedOrdersCount += orderTakenByCashier[i];
             cashierCount++;
         }
     }
@@ -1194,13 +1228,12 @@ void drawCashiersPerformaneGraph()
         }
         cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
     }
-    getch();
 }
 void processAdmin(int choice)
 {
     if (choice == 0)
     {
-        productList();
+        printProductList();
         getch();
     }
     else if (choice == 1)
@@ -1231,7 +1264,7 @@ void processAdmin(int choice)
 }
 void processProductManagement()
 {
-    productList();
+    printProductList();
     int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
     if (productLocation != -1)
     {
@@ -1453,38 +1486,43 @@ int takeChoice(int offset, int size, short color)
     }
     while (1)
     {
-        if (currentTime != getCurrentTime())
+        if (currentMinute != getCurrentMinute())
         {
+            currentMinute = getCurrentMinute();
             printDateAndTime();
         }
         if (kbhit())
         {
             key = getch();
-            if (GetAsyncKeyState(VK_UP) && pointerPos == 0)
+            if (key == 224) // getch() function two values for arrow keys,so discarding first one
+            {
+                key = getch();
+            }
+            if (key == 72 && pointerPos == 0)
             {
                 previousPos = pointerPos;
                 pointerPos = size - 1;
                 movePointer(previousPos, pointerPos, offset, color);
             }
-            else if (GetAsyncKeyState(VK_DOWN) && pointerPos == size - 1)
+            else if (key == 80 && pointerPos == size - 1)
             {
                 previousPos = pointerPos;
                 pointerPos = 0;
                 movePointer(previousPos, pointerPos, offset, color);
             }
-            else if (GetAsyncKeyState(VK_UP) && pointerPos > 0)
+            else if (key == 72 && pointerPos > 0)
             {
                 previousPos = pointerPos;
                 pointerPos--;
                 movePointer(previousPos, pointerPos, offset, color);
             }
-            else if (GetAsyncKeyState(VK_DOWN) && pointerPos < size - 1)
+            else if (key == 80 && pointerPos < size - 1)
             {
                 previousPos = pointerPos;
                 pointerPos++;
                 movePointer(previousPos, pointerPos, offset, color);
             }
-            if (key > '0' && key <= '9')
+            else if (key > '0' && key <= '9')
             {
                 key -= '0';
                 if (key <= size)
@@ -1493,7 +1531,7 @@ int takeChoice(int offset, int size, short color)
                     break;
                 }
             }
-            if (key == VK_ESCAPE)
+            else if (key == VK_ESCAPE)
             {
                 key = -1;
                 break;
@@ -1504,7 +1542,6 @@ int takeChoice(int offset, int size, short color)
                 break;
             }
         }
-        Sleep(50);
     }
     setColor(0x7);
     return key;
@@ -1617,6 +1654,11 @@ string getCurrentTime()
     tstruct = *localtime(&now);
     strftime(buf, sizeof(buf), "%I:%M%p", &tstruct);
     return buf;
+}
+int getCurrentMinute()
+{
+    time_t now = time(0);
+    return localtime(&now)->tm_min;
 }
 string getCurrentDateAndTime()
 {
