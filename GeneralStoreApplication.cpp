@@ -81,11 +81,13 @@ void movePointer(int previousPos, int pointerPos, int offset, short color);
 void eraseInput(int initialVerticalPos);
 void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
+void handleTimeUpdate();
 string getCurrentDate();
 string getCurrentTime();
 string getCurrentDateAndTime();
-string getline(string &str);
+string takeLine(string &str);
 int getCurrentMinute();
+char takech();
 // string menus
 string adminMenu[] = {
     "View list of products and their quantites",
@@ -210,7 +212,6 @@ void printDateAndTime()
     setColor(0x7);
     gotoxy(x, y);
 }
-
 void printTitle(string text, int paddng, short color)
 {
     setColor((color / 16 % 16) * 17);
@@ -439,7 +440,7 @@ string takeStringInput(string message)
         cout << "Enter the " << message << ": ";
         setColor(0x6);
         cin.sync();
-        getline(input);
+        takeLine(input);
         cin.sync();
         setColor(0x7);
         consoleCursor(false);
@@ -537,7 +538,7 @@ bool takeYesNoQuestion(string message)
     setColor(0x7);
     while (1)
     {
-        int option = getch();
+        int option = takech();
         if (option == 'y' || option == 'Y')
         {
             return true;
@@ -585,7 +586,7 @@ bool errorDisplay(string error)
     cout << "Press Enter to continue or Escape to abort operation..." << endl;
     while (1)
     {
-        key = getch();
+        key = takech();
         if (key == VK_RETURN)
         {
             return false;
@@ -609,7 +610,7 @@ bool errorEmptyString(string item)
 void halt()
 {
     cout << "Press any key to continue..." << endl;
-    getch();
+    takech();
     cin.sync();
 }
 void viewNetProfit()
@@ -624,7 +625,7 @@ void viewNetProfit()
     setColor(0x60);
     cout << netProfit << " Rs";
     setColor(0x7);
-    getch();
+    takech();
 }
 // file related function
 /*void storeProducts()
@@ -1034,7 +1035,7 @@ void printPricePayable(double pricePayable)
     setColor(0xa);
     cout << "Price payable: " << pricePayable << " Rs" << endl;
     setColor(0x7);
-    getch();
+    takech();
 }
 int processProductQuantity(int productLocation)
 {
@@ -1124,7 +1125,7 @@ void processUserManagement(int choice)
     if (choice == 0)
     {
         usersList();
-        getch();
+        takech();
     }
     else if (choice == 1)
     {
@@ -1152,7 +1153,7 @@ void processCashier(int choice)
     if (choice == 0)
     {
         printProductList();
-        getch();
+        takech();
     }
     else if (choice == 1)
     {
@@ -1203,7 +1204,7 @@ void processStats(int choice)
     else if (choice == 2)
     {
         printSalesRecord();
-        getch();
+        takech();
     }
     else if (choice == 3)
     {
@@ -1212,7 +1213,7 @@ void processStats(int choice)
     else if (choice == 4)
     {
         drawCashiersPerformanceGraph();
-        getch();
+        takech();
     }
 }
 void printSalesRecord()
@@ -1280,7 +1281,7 @@ void processAdmin(int choice)
     if (choice == 0)
     {
         printProductList();
-        getch();
+        takech();
     }
     else if (choice == 1)
     {
@@ -1536,16 +1537,12 @@ int takeChoice(int offset, int size, short color)
     }
     else
     {
-        getch();
+        takech();
         return key;
     }
     while (1)
     {
-        if (currentMinute != getCurrentMinute())
-        {
-            currentMinute = getCurrentMinute();
-            printDateAndTime();
-        }
+        handleTimeUpdate();
         if (kbhit())
         {
             key = getch();
@@ -1614,12 +1611,14 @@ void movePointer(int previousPos, int pointerPos, int offset, short color)
     gotoxy(0, pointerPos);
     cout << temp;
 }
-string getline(string &str)
+string takeLine(string &str)
 {
     char c = 0;
     while (1)
     {
-        if (kbhit)
+        handleTimeUpdate();
+        setColor(0x6);
+        if (kbhit())
         {
             c = getch();
             if (c == VK_ESCAPE)
@@ -1629,10 +1628,13 @@ string getline(string &str)
             }
             else if (c == '\b')
             {
-                cout << '\b';
-                cout << ' ';
-                cout << '\b';
-                str.erase(str.size() - 1);
+                if (str.length())
+                {
+                    cout << '\b';
+                    cout << ' ';
+                    cout << '\b';
+                    str.erase(str.size() - 1);
+                }
             }
             else if (c == -32)
             {
@@ -1742,4 +1744,24 @@ void logout()
     someoneLoggedIn = false;
     role = -1;
     currentUser = "";
+}
+void handleTimeUpdate()
+{
+    if (currentMinute != getCurrentMinute())
+    {
+        currentMinute = getCurrentMinute();
+        printDateAndTime();
+    }
+}
+char takech()
+{
+    cin.clear();
+    while (1)
+    {
+        handleTimeUpdate();
+        if (kbhit())
+        {
+            return getch();
+        }
+    }
 }
