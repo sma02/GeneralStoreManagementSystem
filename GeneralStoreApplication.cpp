@@ -408,6 +408,26 @@ void eraseInput(int initialVerticalPos)
     }
     gotoxy(0, initialVerticalPos);
 }
+bool isFloat(string str)
+{
+    char *ptr;
+    strtof(str.c_str(), &ptr);
+    return *ptr == '\0';
+}
+bool isInt(string str)
+{
+    if (!(isdigit(str[0]) || str[0] == '+' || str[0] == '-'))
+    {
+        return false;
+    }
+    for (int i = 1; i < str.length() - 1; i++)
+    {
+
+        if (!isdigit(str[i]))
+            return false;
+    }
+    return true;
+}
 string takeStringInput(string message)
 {
     int y = getCursorY();
@@ -423,10 +443,6 @@ string takeStringInput(string message)
         cin.sync();
         setColor(0x7);
         consoleCursor(false);
-        if (input == "__Exit")
-        {
-            return "";
-        }
         if (input == "")
         {
             if (errorEmptyString(message))
@@ -440,55 +456,77 @@ string takeStringInput(string message)
 }
 int takeIntInput(string message)
 {
-    int input;
-    int y = getCursorY();
+    int value;
     while (1)
     {
-        setColor(0x2);
-        consoleCursor(true);
-        cout << "Enter the " << message << ": ";
-        setColor(0x6);
-        if (!(cin >> input) || input < 0)
+        string tempInput = takeStringInput(message);
+        if (tempInput == "__Exit")
         {
-            cin.ignore();
-            if (errorLessThanZero(message))
+            return -1;
+        }
+        if (isInt(tempInput))
+        {
+            value = stoi(tempInput);
+            if (value < 0)
             {
-                consoleCursor(false);
+                if (errorLessThanZero(message))
+                {
+                    return -1;
+                }
+                eraseInput(getCursorY() - 3);
+            }
+            else
+            {
+                return stof(tempInput);
+            }
+        }
+        else
+        {
+            if (errorDisplay("invalid value for " + message))
+            {
                 return -1;
             }
-            eraseInput(y);
-            continue;
+            eraseInput(getCursorY() - 3);
         }
-        setColor(0x7);
-        consoleCursor(false);
-        return input;
     }
+    return value;
 }
 float takeFloatInput(string message)
 {
-    float input;
-    int y = getCursorY();
+    float value;
     while (1)
     {
-        setColor(0x2);
-        consoleCursor(true);
-        cout << "Enter the " << message << ": ";
-        setColor(0x6);
-        if (!(cin >> input) || input < 0)
+        string tempInput = takeStringInput(message);
+        if (tempInput == "__Exit")
         {
-            cin.ignore();
-            if (errorLessThanZero(message))
+            return -1;
+        }
+        if (isFloat(tempInput))
+        {
+            value = stof(tempInput);
+            if (value < 0)
             {
-                consoleCursor(false);
+                if (errorLessThanZero(message))
+                {
+                    return -1;
+                }
+                eraseInput(getCursorY() - 3);
+            }
+            else
+            {
+                return stof(tempInput);
+            }
+        }
+        else
+        {
+            if (errorDisplay("invalid value for " + message))
+            {
                 return -1;
             }
-            eraseInput(y);
-            continue;
+            eraseInput(getCursorY() - 3);
         }
-        setColor(0x7);
-        consoleCursor(false);
-        return input;
     }
+    return value;
 }
 bool takeYesNoQuestion(string message)
 {
@@ -560,7 +598,7 @@ bool errorDisplay(string error)
 }
 bool errorLessThanZero(string item)
 {
-    string actualError = "Invalid input for " + item;
+    string actualError = item + " cannot be less than zero!";
     return errorDisplay(actualError);
 }
 bool errorEmptyString(string item)
@@ -795,7 +833,7 @@ void productAdd()
     while (1)
     {
         productName = takeStringInput("name of product");
-        if (productName == "")
+        if (productName == "__Exit")
         {
             return;
         }
@@ -842,11 +880,11 @@ void productRemove()
     int productLocation = -1;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Users Management>Product Remove");
-    productLocation = searchIndex(product, productNames, currentNumberOfProducts);
     while (1)
     {
         product = takeStringInput("name of product");
-        if (product == "")
+        productLocation = searchIndex(product, productNames, currentNumberOfProducts);
+        if (product == "__Exit")
         {
             return;
         }
@@ -1022,7 +1060,7 @@ void productUpdateHandle(int choice, int productLocation)
     if (choice == 0)
     {
         string productName = takeStringInput("product name");
-        if (productName == "")
+        if (productName == "__Exit")
             return;
         productNames[productLocation] = productName;
         ProductSort(productNames, currentNumberOfProducts);
@@ -1264,14 +1302,23 @@ void processAdmin(int choice)
 }
 void processProductManagement()
 {
-    printProductList();
-    int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
-    if (productLocation != -1)
+    while (1)
     {
-        printLogo();
-        printMenuItems(5, productEditMenu, 5);
-        int choice = takeChoice(5, 5, 0x03);
-        productUpdateHandle(choice, productLocation);
+        printProductList();
+        int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
+        if (productLocation != -1)
+        {
+
+            printLogo();
+            printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation]);
+            printMenuItems(6, productEditMenu, 5);
+            int choice = takeChoice(6, 5, 0x03);
+            productUpdateHandle(choice, productLocation);
+        }
+        else
+        {
+            return;
+        }
     }
 }
 void Login()
@@ -1316,7 +1363,7 @@ void addUser()
     while (1)
     {
         username = takeStringInput("username");
-        if (username == "")
+        if (username == "__Exit")
         {
             return;
         }
@@ -1336,7 +1383,7 @@ void addUser()
     while (1)
     {
         password = takeStringInput("password");
-        if (password == "")
+        if (password == "__Exit")
         {
             return;
         }
@@ -1356,7 +1403,7 @@ void addUser()
     while (1)
     {
         role = takeStringInput("role for user");
-        if (role == "")
+        if (role == "__Exit")
         {
             return;
         }
@@ -1388,7 +1435,7 @@ void removeUser()
     while (1)
     {
         username = takeStringInput("username");
-        if (username == "")
+        if (username == "__Exit")
         {
             return;
         }
@@ -1439,7 +1486,7 @@ void changePassword()
     while (1)
     {
         password = takeStringInput("password");
-        if (password == "")
+        if (password == "__Exit")
         {
             return;
         }
@@ -1570,7 +1617,6 @@ string getline(string &str)
             if (c == VK_ESCAPE)
             {
                 str = "__Exit";
-                gotoxy(getCursorX(), getCursorY() + 1);
                 break;
             }
             else if (c == '\b')
@@ -1578,7 +1624,7 @@ string getline(string &str)
                 cout << '\b';
                 cout << ' ';
                 cout << '\b';
-                str.erase(str.size()-1);
+                str.erase(str.size() - 1);
             }
             else if (c == -32)
             {
@@ -1586,7 +1632,7 @@ string getline(string &str)
             }
             else if (c == VK_RETURN)
             {
-                cout<<endl;
+                cout << endl;
                 break;
             }
             else
