@@ -829,7 +829,7 @@ void productAdd()
     int quantity;
     int count = 0;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Users Management>Product Add");
+    printCurrentMenuAndUserType("Main Menu>Product Add");
     while (1)
     {
         productName = takeStringInput("name of product");
@@ -879,7 +879,7 @@ void productRemove()
     string product;
     int productLocation = -1;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Users Management>Product Remove");
+    printCurrentMenuAndUserType("Main Menu>Product Remove");
     while (1)
     {
         product = takeStringInput("name of product");
@@ -983,6 +983,10 @@ void processNewOrder()
         int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
 
         quantity = processProductQuantity(productLocation);
+        if (quantity == -1)
+        {
+            return;
+        }
         productInOrderIndex = searchIndex(productNames[productLocation], productsInOrderNames, productsInOrderCount);
         if (productInOrderIndex == -1)
         {
@@ -1035,22 +1039,26 @@ void printPricePayable(double pricePayable)
 int processProductQuantity(int productLocation)
 {
     printLogo();
-    int quantity = takeIntInput("Quantity of product");
-    if (quantity < 0)
+    printCurrentMenuAndUserType("new Order>" + productNames[productLocation] + ">Quantity");
+    while (1)
     {
-        errorDisplay("quantity cannot be negetive!");
-    }
-    else if (quantity == 0)
-    {
-        return 0;
-    }
-    else if (quantity > productQuantity[productLocation])
-    {
-        errorDisplay("not enough quantity present in inventory!");
-    }
-    else
-    {
-        return quantity;
+        int quantity = takeIntInput("Quantity of product");
+        if (quantity < 0)
+        {
+            return -1;
+        }
+        else if (quantity > productQuantity[productLocation])
+        {
+            if (errorDisplay("not enough quantity present in inventory!"))
+            {
+                return -1;
+            }
+            eraseInput(getCursorY() - 3);
+        }
+        else
+        {
+            return quantity;
+        }
     }
     return -1;
 }
