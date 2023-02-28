@@ -419,14 +419,14 @@ string takeStringInput(string message)
         cout << "Enter the " << message << ": ";
         setColor(0x6);
         cin.sync();
-        getline(cin, input);
+        getline(input);
         cin.sync();
         setColor(0x7);
         consoleCursor(false);
-        /*if(input=="__Exit")
+        if (input == "__Exit")
         {
             return "";
-        }*/
+        }
         if (input == "")
         {
             if (errorEmptyString(message))
@@ -1573,13 +1573,27 @@ string getline(string &str)
                 gotoxy(getCursorX(), getCursorY() + 1);
                 break;
             }
-            cout << c;
-            str += c;
-        }
-        if (c == VK_RETURN)
-        {
-            gotoxy(getCursorX(), getCursorY() + 1);
-            break;
+            else if (c == '\b')
+            {
+                cout << '\b';
+                cout << ' ';
+                cout << '\b';
+                str.erase(str.size()-1);
+            }
+            else if (c == -32)
+            {
+                getch();
+            }
+            else if (c == VK_RETURN)
+            {
+                cout<<endl;
+                break;
+            }
+            else
+            {
+                cout << c;
+                str += c;
+            }
         }
     }
     return str;
