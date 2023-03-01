@@ -234,8 +234,8 @@ void theme2()
     theme[1] = 0x40;
     theme[2] = 0x4;
     theme[3] = 0x40;
-    theme[4] = 0x5;
-    theme[5] = 0x50;
+    theme[4] = 0x4;
+    theme[5] = 0x40;
     theme[6] = 0x40;
     theme[7] = 0x4;
     theme[8] = 0x4;
