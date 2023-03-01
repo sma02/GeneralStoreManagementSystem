@@ -767,17 +767,17 @@ void loadUsers()
     fstream file;
     string temp;
     file.open("users.txt", ios::in);
-    if(file)
+    if (file)
     {
-    while (getline(file, temp))
-    {
-        usernames[usersRegistered] = parseData(temp, 1);
-        passwords[usersRegistered] = parseData(temp, 2);
-        roles[usersRegistered] = parseData(temp, 3);
-        userTheme[usersRegistered] = stoi(parseData(temp, 4));
-        orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 5));
-        usersRegistered++;
-    }
+        while (getline(file, temp))
+        {
+            usernames[usersRegistered] = parseData(temp, 1);
+            passwords[usersRegistered] = parseData(temp, 2);
+            roles[usersRegistered] = parseData(temp, 3);
+            userTheme[usersRegistered] = stoi(parseData(temp, 4));
+            orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 5));
+            usersRegistered++;
+        }
     }
     file.close();
 }
@@ -786,17 +786,17 @@ void loadProducts()
     fstream file;
     string temp;
     file.open("products.txt", ios::in);
-    if(file)
+    if (file)
     {
-    while (getline(file, temp))
-    {
-        productNames[currentNumberOfProducts] = parseData(temp, 1);
-        productCostPrice[currentNumberOfProducts] = stof(parseData(temp, 2));
-        productQuantity[currentNumberOfProducts] = stoi(parseData(temp, 3));
-        productProfitPercentage[currentNumberOfProducts] = stof(parseData(temp, 4));
-        productRetailPrice[currentNumberOfProducts] = productCostPrice[currentNumberOfProducts] * (100 + productProfitPercentage[currentNumberOfProducts]) / 100;
-        currentNumberOfProducts++;
-    }
+        while (getline(file, temp))
+        {
+            productNames[currentNumberOfProducts] = parseData(temp, 1);
+            productCostPrice[currentNumberOfProducts] = stof(parseData(temp, 2));
+            productQuantity[currentNumberOfProducts] = stoi(parseData(temp, 3));
+            productProfitPercentage[currentNumberOfProducts] = stof(parseData(temp, 4));
+            productRetailPrice[currentNumberOfProducts] = productCostPrice[currentNumberOfProducts] * (100 + productProfitPercentage[currentNumberOfProducts]) / 100;
+            currentNumberOfProducts++;
+        }
     }
     file.close();
 }
@@ -984,43 +984,56 @@ void processNewOrder()
     bool running = true;
     double pricePayable = 0;
     int option;
-    while (running)
+    while (1)
     {
         printProductList();
-        int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
+        if (currentNumberOfProducts)
+        {
+            int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
 
-        quantity = processProductQuantity(productLocation);
-        if (quantity == -1)
-        {
+            quantity = processProductQuantity(productLocation);
+            if (quantity == -1)
+            {
+                return;
+            }
+            productInOrderIndex = searchIndex(productNames[productLocation], productsInOrderNames, productsInOrderCount);
+            if (productInOrderIndex == -1)
+            {
+                productsInOrderNames[productsInOrderCount] = productNames[productLocation];
+                productInOrderQuantities[productsInOrderCount] = quantity;
+                productsInOrderCount++;
+            }
+            else if (productQuantity[productLocation] < (productInOrderQuantities[productInOrderIndex] + quantity))
+            {
+                errorDisplay("not enough quantity present in inventory!");
+                continue;
+            }
+            else
+            {
+                productInOrderQuantities[productInOrderIndex] += quantity;
+            }
+            if (takeYesNoQuestion("Another item"))
+            {
+                continue;
+            }
+
+            printBill(productsInOrderCount);
+            if (takeYesNoQuestion("Order confirmed"))
+            {
+                double pricePayable = calculateTotalPayable(productsInOrderCount);
+                double totalCostPrice = calculateTotalCostPrice(productsInOrderCount);
+                addToRecord(totalCostPrice, pricePayable);
+                printPricePayable(pricePayable);
+                storeProducts();
+                storeBasicStats();
+            }
             return;
-        }
-        productInOrderIndex = searchIndex(productNames[productLocation], productsInOrderNames, productsInOrderCount);
-        if (productInOrderIndex == -1)
-        {
-            productsInOrderNames[productsInOrderCount] = productNames[productLocation];
-            productInOrderQuantities[productsInOrderCount] = quantity;
-            productsInOrderCount++;
-        }
-        else if (productQuantity[productLocation] < (productInOrderQuantities[productInOrderIndex] + quantity))
-        {
-            errorDisplay("not enough quantity present in inventory!");
-            continue;
         }
         else
         {
-            productInOrderQuantities[productInOrderIndex] += quantity;
+            takech();
+            return;
         }
-        running = takeYesNoQuestion("Another item");
-    }
-    printBill(productsInOrderCount);
-    if (takeYesNoQuestion("Order confirmed"))
-    {
-        double pricePayable = calculateTotalPayable(productsInOrderCount);
-        double totalCostPrice = calculateTotalCostPrice(productsInOrderCount);
-        addToRecord(totalCostPrice, pricePayable);
-        printPricePayable(pricePayable);
-        storeProducts();
-        storeBasicStats();
     }
 }
 void addToRecord(double totalCostPrice, double totalSellPrice)
@@ -1243,7 +1256,7 @@ void handleStats()
         printCurrentMenuAndUserType("Main Menu>Statistics");
         printMenuItems(6, statsMenu, 4);
         choice = takeChoice(6, 4, theme[0]);
-        if (choice > 5)
+        if (choice > 2)
         {
             choice = -1;
         }
@@ -1322,11 +1335,14 @@ void drawCashiersPerformanceGraph()
         gotoxy(offset + maxNameLength - cashiers[i].length() - 1, (i * scaleY / cashierCount) + offset);
         cout << cashiers[i];
         gotoxy(offset + maxNameLength + 1, (i * scaleY / cashierCount) + offset);
-        for (int j = 0; j < scaleX * cashiersOrderCount[i] / totalProcessedOrdersCount; j++)
+        if (totalProcessedOrdersCount != 0)
         {
-            cout << c254;
+            for (int j = 0; j < scaleX * cashiersOrderCount[i] / totalProcessedOrdersCount; j++)
+            {
+                cout << c254;
+            }
+            cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
         }
-        cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
     }
 }
 void processAdmin(int choice)
