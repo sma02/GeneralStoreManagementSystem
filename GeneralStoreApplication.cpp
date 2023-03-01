@@ -107,6 +107,7 @@ string cashierMenu[] = {
     "View list of products and their quantities",
     "New order",
     "change password",
+    "Change Theme",
     "logout..."};
 
 string productEditMenu[] = {
@@ -665,7 +666,7 @@ void viewNetProfit()
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Statistics>Net Profit");
     gotoxy(x - 12, y);
-    printTitle("Net Profit", 1, 0x20);
+    printTitle("Net Profit", 1, theme[9]);
     printPadding(x, y, 8, 1, theme[5]);
     gotoxy(x + 1, y);
     setColor(theme[5]);
@@ -956,7 +957,7 @@ void processNewOrder()
     while (running)
     {
         printProductList();
-        int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
+        int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
 
         quantity = processProductQuantity(productLocation);
         if (quantity == -1)
@@ -1123,8 +1124,8 @@ void handleCashier()
 {
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
-    printMenuItems(6, cashierMenu, 4);
-    int choice = takeChoice(6, 4, theme[0]);
+    printMenuItems(6, cashierMenu, 5);
+    int choice = takeChoice(6, 5, theme[0]);
     processCashier(choice);
 }
 void processCashier(int choice)
@@ -1143,6 +1144,10 @@ void processCashier(int choice)
         changePassword();
     }
     else if (choice == 3)
+    {
+        handleThemeChange();
+    }
+    else if (choice == 4)
     {
         logout();
     }
@@ -1168,14 +1173,15 @@ void handleThemeChange()
         {
             return;
         }
-        else if(choice==-1)
+        else if (choice == -1)
         {
             return;
         }
-        else{
-        processThemeChange(choice);
-        userTheme[searchIndex(currentUser, usernames, usersRegistered)] = choice;
-        storeUsers();
+        else
+        {
+            processThemeChange(choice);
+            userTheme[searchIndex(currentUser, usernames, usersRegistered)] = choice;
+            storeUsers();
         }
     }
 }
@@ -1193,7 +1199,7 @@ void processThemeChange(int choice)
     {
         theme3();
     }
-        else if (choice == 3)
+    else if (choice == 3)
     {
         theme4();
     }
@@ -1334,14 +1340,14 @@ void processProductManagement()
     while (1)
     {
         printProductList();
-        int productLocation = takeChoice(7, currentNumberOfProducts, 0x06);
+        int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
         if (productLocation != -1)
         {
 
             printLogo();
             printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation]);
             printMenuItems(6, productEditMenu, 5);
-            int choice = takeChoice(6, 5, 0x03);
+            int choice = takeChoice(6, 5, theme[0]);
             productUpdateHandle(choice, productLocation);
         }
         else
