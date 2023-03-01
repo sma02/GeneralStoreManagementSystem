@@ -46,6 +46,7 @@ void processAdmin(int choice);
 void processCashier(int choice);
 void processUserManagement(int choice);
 void processStats(int choice);
+void processThemeChange(int choice);
 bool errorDisplay(string error);
 // file related functions
 void storeUsers();
@@ -79,12 +80,18 @@ void eraseInput();
 void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
 void handleTimeUpdate(bool flag);
+void handleThemeChange();
 string getCurrentDate();
 string getCurrentTime();
 string getCurrentDateAndTime();
 bool takeLine(string &str);
 int getCurrentMinute();
 char takech();
+// theme functions
+void theme1();
+void theme2();
+void theme3();
+void theme4();
 // string menus
 string adminMenu[] = {
     "View list of products and their quantites",
@@ -93,6 +100,7 @@ string adminMenu[] = {
     "update quantity of a product",
     "User Management",
     "Statistics",
+    "Change Theme",
     "logout..."};
 
 string cashierMenu[] = {
@@ -120,6 +128,13 @@ string statsMenu[] = {
     "Sales record",
     "Cashiers performance graph",
     "back..."};
+
+string themeMenu[] = {
+    "Default Theme",
+    "Red Theme",
+    "Blue Theme",
+    "alternate Theme",
+    "back..."};
 // Products
 #define NoOfProducts 100
 int currentNumberOfProducts = 0;
@@ -138,15 +153,17 @@ int productInOrderQuantities[NoOfProducts];
 string usernames[NoOfUsers];
 string passwords[NoOfUsers];
 string roles[NoOfUsers];
+int userTheme[NoOfUsers];
 int orderTakenByCashier[NoOfUsers];
 int usersRegistered = 0;
 
 // Record Variables
-string orderDate[100];
-string orderTime[100];
-string orderCashierUserName[100];
-float orderTotalCostPrice[100];
-float orderTotalSellPrice[100];
+#define NoOfRecords 100
+string orderDate[NoOfRecords];
+string orderTime[NoOfRecords];
+string orderCashierUserName[NoOfRecords];
+float orderTotalCostPrice[NoOfRecords];
+float orderTotalSellPrice[NoOfRecords];
 int currentRecordCount = 0;
 // Globals
 int consoleWidth;
@@ -157,6 +174,7 @@ string currentUserPassword = "";
 string role = "";
 int currentMinute = 0;
 double netProfit = 0;
+int theme[10];
 
 int main()
 {
@@ -183,11 +201,13 @@ void init()
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
     loadUsers();
+    theme1();
     if (usersRegistered == 0)
     {
         usernames[0] = "default";
         passwords[0] = "something";
         roles[0] = "admin";
+        userTheme[0] = 0;
         orderTakenByCashier[0] = -1;
         usersRegistered++;
     }
@@ -195,16 +215,68 @@ void init()
     loadBasicStats();
     loadSalesRecord();
 }
+void theme1()
+{
+    theme[0] = 0x3;
+    theme[1] = 0x30;
+    theme[2] = 0x7;
+    theme[3] = 0x70;
+    theme[4] = 0x6;
+    theme[5] = 0x60;
+    theme[6] = 0x50;
+    theme[7] = 0x4;
+    theme[8] = 0x2;
+    theme[9] = 0x20;
+}
+void theme2()
+{
+    theme[0] = 0x4;
+    theme[1] = 0x40;
+    theme[2] = 0x4;
+    theme[3] = 0x40;
+    theme[4] = 0x5;
+    theme[5] = 0x50;
+    theme[6] = 0x40;
+    theme[7] = 0x4;
+    theme[8] = 0x4;
+    theme[9] = 0x40;
+}
+void theme3()
+{
+    theme[0] = 0x3;
+    theme[1] = 0x30;
+    theme[2] = 0x3;
+    theme[3] = 0x30;
+    theme[4] = 0x3;
+    theme[5] = 0x30;
+    theme[6] = 0x30;
+    theme[7] = 0x3;
+    theme[8] = 0x3;
+    theme[9] = 0x30;
+}
+void theme4()
+{
+    theme[0] = 0x2;
+    theme[1] = 0x20;
+    theme[2] = 0x8;
+    theme[3] = 0x80;
+    theme[4] = 0x3;
+    theme[5] = 0x30;
+    theme[6] = 0x80;
+    theme[7] = 0x4;
+    theme[8] = 0x2;
+    theme[9] = 0x40;
+}
 void printDateAndTime()
 {
     int x = getCursorX();
     int y = getCursorY();
-    setColor(0x3);
+    setColor(theme[0]);
     gotoxy(1, 0);
     cout << getCurrentDate();
     gotoxy(consoleWidth - 9, 0);
     cout << getCurrentTime();
-    setColor(0x7);
+    setColor(theme[2]);
     gotoxy(x, y);
 }
 void printTitle(string text, int paddng, short color)
@@ -238,21 +310,21 @@ void printLogo()
 {
     system("cls");
     printDateAndTime();
-    printPadding(0, 1, consoleWidth, 3, 0x50);
+    printPadding(0, 1, consoleWidth, 3, theme[6]);
     gotoxy((consoleWidth - 32) / 2, 2);
-    printTitle("General Store Management system", 2, 0x50);
-    setColor(0x7);
+    printTitle("General Store Management system", 2, theme[6]);
+    setColor(theme[2]);
     gotoxy(0, 5);
 }
 void printMenuItems(int offset, string items[], int arraySize)
 {
-    setColor(0x3);
+    setColor(theme[0]);
     gotoxy(0, offset);
     for (int i = 1; i <= arraySize; i++)
     {
         cout << "  " << i << ".\t" << items[i - 1] << endl;
     }
-    setColor(0x7);
+    setColor(theme[2]);
 }
 void printBill(int productsInOrderCount)
 {
@@ -298,43 +370,43 @@ void printStringColumn(int x, int y, string title, string items[], int arraySize
 {
     int count = 0;
     gotoxy(x, y);
-    printTitle(title, padding, 0x30);
-    setColor(0x6);
+    printTitle(title, padding, theme[1]);
+    setColor(theme[4]);
     for (int i = 0; i < arraySize; i++)
     {
         gotoxy(x, i + y + 2);
         cout << items[i];
         count++;
     }
-    setColor(0x7);
+    setColor(theme[2]);
 }
 void printIntColumn(int x, int y, string title, int items[], int arraySize, int padding)
 {
     int count = 0;
     gotoxy(x, y);
-    printTitle(title, padding, 0x30);
-    setColor(0x6);
+    printTitle(title, padding, theme[1]);
+    setColor(theme[4]);
     for (int i = 0; i < arraySize; i++)
     {
         gotoxy(x - 1 + (title.length() + 2 * padding) / 2, i + y + 2);
         cout << items[i];
         count++;
     }
-    setColor(0x7);
+    setColor(theme[2]);
 }
 void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo, int padding)
 {
     int count = 0;
     gotoxy(x, y);
-    printTitle(title, padding, 0x30);
-    setColor(0x6);
+    printTitle(title, padding, theme[1]);
+    setColor(theme[4]);
     for (int i = 0; i < arraySize; i++)
     {
         gotoxy(x - 1 + (title.length() + 2 * padding) / 2, i + y + 2);
         cout << items[i] << extraInfo;
         count++;
     }
-    setColor(0x7);
+    setColor(theme[2]);
 }
 void printCurrentMenuAndUserType(string menuName)
 {
@@ -344,16 +416,16 @@ void printCurrentMenuAndUserType(string menuName)
     cout << "User Type: ";
     if (role == "admin")
     {
-        setColor(0x4);
+        setColor(theme[7]);
         cout << "Admin";
     }
     else
     {
-        setColor(0x2);
+        setColor(theme[8]);
         cout << "Cashier";
     }
     gotoxy(0, 5);
-    setColor(0x02);
+    setColor(theme[8]);
     for (int i = 0; i < consoleWidth; i++)
     {
         cout << "_";
@@ -382,7 +454,7 @@ void ProductSort(string arr[], int arraysize)
 {
     for (int i = 0; i < arraysize; i++)
     {
-        for (int j = 0; j < arraysize ; j++)
+        for (int j = 0; j < arraysize; j++)
         {
             if (arr[j] > arr[i])
             {
@@ -393,14 +465,14 @@ void ProductSort(string arr[], int arraysize)
 }
 void eraseInput()
 {
-    int position=getCursorY();
+    int position = getCursorY();
     setColor(0);
-    gotoxy(0, position-3);
-    for (int i = position-3; i < position; i++)
+    gotoxy(0, position - 3);
+    for (int i = position - 3; i < position; i++)
     {
         cout << getStringAtxy(0, i);
     }
-    gotoxy(0, position-3);
+    gotoxy(0, position - 3);
 }
 bool isFloat(string str)
 {
@@ -428,12 +500,12 @@ bool takeStringInput(string message, string &str)
     str = "";
     while (1)
     {
-        setColor(0x2);
+        setColor(theme[8]);
         consoleCursor(true);
         cout << "Enter the " << message << ": ";
-        setColor(0x6);
+        setColor(theme[4]);
         status = takeLine(str);
-        setColor(0x7);
+        setColor(theme[2]);
         consoleCursor(false);
         if (str == "" && status)
         {
@@ -528,9 +600,9 @@ bool takeFloatInput(string message, float &data)
 bool takeYesNoQuestion(string message)
 {
     int option;
-    setColor(0x3);
+    setColor(theme[0]);
     cout << message << "?[press Y or N]: " << endl;
-    setColor(0x7);
+    setColor(theme[2]);
     while (1)
     {
         int option = takech();
@@ -564,7 +636,7 @@ bool errorDisplay(string error)
     cout << "Error:";
     setColor(0xe);
     cout << error << endl;
-    setColor(0x7);
+    setColor(theme[2]);
     cin.clear();
     cin.sync();
     cout << "Press Enter to continue or Escape to abort operation..." << endl;
@@ -589,16 +661,16 @@ void halt()
 }
 void viewNetProfit()
 {
-    int x = consoleWidth/2, y = consoleHeight/2;
+    int x = consoleWidth / 2, y = consoleHeight / 2;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Statistics>Net Profit");
     gotoxy(x - 12, y);
     printTitle("Net Profit", 1, 0x20);
-    printPadding(x, y, 8, 1, 0x60);
+    printPadding(x, y, 8, 1, theme[5]);
     gotoxy(x + 1, y);
-    setColor(0x60);
+    setColor(theme[5]);
     cout << netProfit << " Rs";
-    setColor(0x7);
+    setColor(theme[2]);
 }
 // file related function
 void storeUsers()
@@ -612,6 +684,7 @@ void storeUsers()
             file << usernames[i] << ',';
             file << passwords[i] << ',';
             file << roles[i] << ',';
+            file << userTheme[i] << ',';
             file << orderTakenByCashier[i];
             file << endl;
         }
@@ -668,9 +741,10 @@ void loadUsers()
         usernames[usersRegistered] = parseData(temp, 1);
         passwords[usersRegistered] = parseData(temp, 2);
         roles[usersRegistered] = parseData(temp, 3);
+        userTheme[usersRegistered] = stoi(parseData(temp, 4));
         if (roles[usersRegistered] == "cashier")
         {
-            orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 4));
+            orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 5));
         }
         else
         {
@@ -935,7 +1009,7 @@ void printPricePayable(double pricePayable)
 {
     setColor(0xa);
     cout << "Price payable: " << pricePayable << " Rs" << endl;
-    setColor(0x7);
+    setColor(theme[2]);
     takech();
 }
 int processProductQuantity(int productLocation)
@@ -1017,7 +1091,7 @@ void handleUserManagement()
         printCurrentMenuAndUserType("Main Menu>Users Management");
         printMenuItems(6, userManageMenu, 5);
 
-        choice = takeChoice(6, 5, 0x3);
+        choice = takeChoice(6, 5, theme[0]);
         if (choice > 3)
         {
             choice = -1;
@@ -1050,7 +1124,7 @@ void handleCashier()
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
     printMenuItems(6, cashierMenu, 4);
-    int choice = takeChoice(6, 4, 0x3);
+    int choice = takeChoice(6, 4, theme[0]);
     processCashier(choice);
 }
 void processCashier(int choice)
@@ -1077,9 +1151,52 @@ void handleAdmin()
 {
     printLogo();
     printCurrentMenuAndUserType("Main Menu");
-    printMenuItems(6, adminMenu, 7);
-    int choice = takeChoice(6, 7, 0x3);
+    printMenuItems(6, adminMenu, 8);
+    int choice = takeChoice(6, 8, theme[0]);
     processAdmin(choice);
+}
+void handleThemeChange()
+{
+    int choice = 0;
+    while (1)
+    {
+        printLogo();
+        printCurrentMenuAndUserType("Main Menu>Change Theme");
+        printMenuItems(6, themeMenu, 5);
+        choice = takeChoice(6, 5, theme[0]);
+        if (choice > 3)
+        {
+            return;
+        }
+        else if(choice==-1)
+        {
+            return;
+        }
+        else{
+        processThemeChange(choice);
+        userTheme[searchIndex(currentUser, usernames, usersRegistered)] = choice;
+        storeUsers();
+        }
+    }
+}
+void processThemeChange(int choice)
+{
+    if (choice == 0)
+    {
+        theme1();
+    }
+    else if (choice == 1)
+    {
+        theme2();
+    }
+    else if (choice == 2)
+    {
+        theme3();
+    }
+        else if (choice == 3)
+    {
+        theme4();
+    }
 }
 void handleStats()
 {
@@ -1088,8 +1205,8 @@ void handleStats()
     {
         printLogo();
         printCurrentMenuAndUserType("Main Menu>Statistics");
-        printMenuItems(6, statsMenu, 3);
-        choice = takeChoice(6, 4, 0x3);
+        printMenuItems(6, statsMenu, 4);
+        choice = takeChoice(6, 4, theme[0]);
         if (choice > 5)
         {
             choice = -1;
@@ -1163,7 +1280,7 @@ void drawCashiersPerformanceGraph()
     {
         cout << c196;
     }
-    setColor(0x3);
+    setColor(theme[0]);
     for (int i = 0; i < cashierCount; i++)
     {
         gotoxy(offset + maxNameLength - cashiers[i].length() - 1, (i * scaleY / cashierCount) + offset);
@@ -1205,7 +1322,10 @@ void processAdmin(int choice)
     }
     else if (choice == 6)
     {
-        storeProducts();
+        handleThemeChange();
+    }
+    else if (choice == 7)
+    {
         logout();
     }
 }
@@ -1237,18 +1357,18 @@ void Login()
     cin.sync();
     int x = 10 * consoleWidth / 32;
     int y = 16 * consoleHeight / 32;
-    printPadding(7 * consoleWidth / 32, 9 * consoleHeight / 32, 19 * consoleWidth / 32, 16 * consoleHeight / 32, 0x30);
+    printPadding(7 * consoleWidth / 32, 9 * consoleHeight / 32, 19 * consoleWidth / 32, 16 * consoleHeight / 32, theme[1]);
     gotoxy(x, y);
     printTitle("username", 1, 0x27);
     gotoxy(x, y + 1);
     printTitle("password", 1, 0x27);
-    printPadding(x + 10, y, 11 * consoleWidth / 32, 2, 0x70);
+    printPadding(x + 10, y, 11 * consoleWidth / 32, 2, theme[3]);
     gotoxy(x + 11, y);
-    setColor(0x70);
+    setColor(theme[3]);
     getline(cin, username);
     gotoxy(x + 11, y + 1);
     getline(cin, password);
-    setColor(0x7);
+    setColor(theme[2]);
     for (int i = 0; i < usersRegistered; i++)
     {
         if (username == usernames[i])
@@ -1258,6 +1378,7 @@ void Login()
                 currentUser = usernames[i];
                 currentUserPassword = passwords[i];
                 role = roles[i];
+                processThemeChange(userTheme[i]);
                 someoneLoggedIn = true;
             }
         }
@@ -1275,7 +1396,7 @@ void addUser()
         {
             return;
         }
-        else if (searchIndex(username, usernames, usersRegistered)!=-1)
+        else if (searchIndex(username, usernames, usersRegistered) != -1)
         {
             if (errorDisplay("Username already registered!"))
             {
@@ -1329,6 +1450,7 @@ void addUser()
     usernames[usersRegistered] = username;
     passwords[usersRegistered] = password;
     roles[usersRegistered] = role;
+    userTheme[usersRegistered] = 0;
     usersRegistered++;
     storeUsers();
 }
@@ -1372,6 +1494,7 @@ void removeUser()
         usernames[i] = usernames[i + 1];
         passwords[i] = passwords[i + 1];
         roles[i] = roles[i + 1];
+        userTheme[i] = userTheme[i + 1];
     }
     usersRegistered--;
     storeUsers();
@@ -1490,7 +1613,7 @@ int takeChoice(int offset, int size, short color)
             }
         }
     }
-    setColor(0x7);
+    setColor(theme[2]);
     return key;
 }
 void movePointer(int previousPos, int pointerPos, int offset, short color)
@@ -1502,7 +1625,7 @@ void movePointer(int previousPos, int pointerPos, int offset, short color)
     gotoxy(0, previousPos);
     cout << temp;
     temp = getStringAtxy(0, pointerPos);
-    setColor(0x30);
+    setColor(theme[1]);
     gotoxy(0, pointerPos);
     cout << temp;
 }
@@ -1512,7 +1635,7 @@ bool takeLine(string &str)
     while (1)
     {
         handleTimeUpdate(true);
-        setColor(0x6);
+        setColor(theme[4]);
         if (kbhit())
         {
             c = getch();
@@ -1637,6 +1760,7 @@ void logout()
 {
     someoneLoggedIn = false;
     role = -1;
+    theme1();
     currentUser = "";
 }
 void handleTimeUpdate(bool flag)
