@@ -1,11 +1,8 @@
 #include <iostream>
-#include <iosfwd>
 #include <fstream>
 #include <windows.h>
 #include <conio.h>
-#include <wincon.h>
 #include <time.h>
-#include <thread>
 using namespace std;
 
 // prototypes
@@ -18,26 +15,20 @@ void printLogo();
 void printMenuItems(int offset, string items[], int arraySize);
 void printCurrentMenuAndUserType(string menuName);
 void printBill(int productsInOrderCount);
+void printProductList();
 void printSalesRecord();
 void printPricePayable(double pricePayable);
-void drawCashiersPerformanceGraph();
 void printStringColumn(int x, int y, string title, string items[], int arraySize, int padding);
 void printIntColumn(int x, int y, string title, int items[], int arraySize, int padding);
 void printFloatColumn(int x, int y, string title, float items[], int arraySize, string extraInfo, int padding);
+void drawCashiersPerformanceGraph();
 double calculateTotalPayable(int productsInOrderCount);
 double calculateTotalCostPrice(int productsInOrderCount);
 void swapProduct(int firstProductIndex, int secondProductIndex);
 void swapUser(int firstUserIndex, int secondUserIndex);
 void productAdd();
 void productRemove();
-void processProductManagement();
-void printProductList();
-int processProductQuantity(int productLocation);
-void productUpdateHandle(int choice, int productLocation);
-void processNewOrder();
-void halt();
 void viewNetProfit();
-void gotoxy(int x, int y);
 void logout();
 void handleAdmin();
 void handleCashier();
@@ -48,6 +39,10 @@ void processCashier(int choice);
 void processUserManagement(int choice);
 void processStats(int choice);
 void processThemeChange(int choice);
+void processProductManagement();
+int processProductQuantity(int productLocation);
+void productUpdateHandle(int choice, int productLocation);
+void processNewOrder();
 bool errorDisplay(string error);
 // file related functions
 void storeUsers();
@@ -64,6 +59,7 @@ void printPadding(int x, int y, int length, int width, short color);
 void setColor(short color);
 int getCursorX();
 int getCursorY();
+void gotoxy(int x, int y);
 int getConsoleHeight();
 int getConsoleWidth();
 void consoleCursor(bool visibility);
@@ -345,30 +341,6 @@ void printBill(int productsInOrderCount)
     printFloatColumn(27 * consoleWidth / 32, 5, "Price", productInOrderPrices, productsInOrderCount, " Rs", consoleWidth / 32);
     cout << endl;
 }
-double calculateTotalPayable(int productsInOrderCount)
-{
-    int productIndex;
-    double pricePayable = 0;
-    for (int i = 0; i < productsInOrderCount; i++)
-    {
-        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
-        pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
-        netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
-        productQuantity[productIndex] -= productInOrderQuantities[i];
-    }
-    return pricePayable;
-}
-double calculateTotalCostPrice(int productsInOrderCount)
-{
-    int productIndex;
-    double totalCostPrice = 0;
-    for (int i = 0; i < productsInOrderCount; i++)
-    {
-        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
-        totalCostPrice += productInOrderQuantities[i] * productCostPrice[productIndex];
-    }
-    return totalCostPrice;
-}
 void printStringColumn(int x, int y, string title, string items[], int arraySize, int padding)
 {
     int count = 0;
@@ -434,6 +406,121 @@ void printCurrentMenuAndUserType(string menuName)
         cout << "_";
     }
     gotoxy(0, 6);
+}
+void printProductList()
+{
+    printLogo();
+    printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
+    printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
+    if (role == "admin")
+    {
+        printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
+        printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
+    }
+    else
+    {
+        printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
+    }
+}
+void printUsersList()
+{
+    printLogo();
+    printStringColumn(consoleWidth / 32, 5, "Username", usernames, usersRegistered, 5 * consoleWidth / 32);
+    printStringColumn(16 * consoleWidth / 32, 5, "Role", roles, usersRegistered, 1 * consoleWidth / 32);
+}
+double calculateTotalPayable(int productsInOrderCount)
+{
+    int productIndex;
+    double pricePayable = 0;
+    for (int i = 0; i < productsInOrderCount; i++)
+    {
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
+        netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
+        productQuantity[productIndex] -= productInOrderQuantities[i];
+    }
+    return pricePayable;
+}
+void printSalesRecord()
+{
+    printLogo();
+    printStringColumn(consoleWidth / 32, 5, "Date", orderDate, currentRecordCount, consoleWidth / 32);
+    printStringColumn(4 * consoleWidth / 32, 5, "Time", orderTime, currentRecordCount, consoleWidth / 32);
+    printStringColumn(15 * consoleWidth / 64, 5, "Cashier Name", orderCashierUserName, currentRecordCount, 3 * consoleWidth / 32);
+    printFloatColumn(18 * consoleWidth / 32, 5, "Total Cost Price", orderTotalCostPrice, currentRecordCount, " Rs", consoleWidth / 32);
+    printFloatColumn(25 * consoleWidth / 32, 5, "Total Sell Price", orderTotalSellPrice, currentRecordCount, " Rs", consoleWidth / 32);
+}
+void drawCashiersPerformanceGraph()
+{
+    int offset = 10;
+    int cashierCount = 0;
+    int scaleX = 16 * consoleWidth / 32;
+    int scaleY = 16 * consoleHeight / 32;
+    int totalProcessedOrdersCount = 0;
+    string cashiers[100];
+    int cashiersOrderCount[100];
+    char c254 = 254;
+    char c245 = 245;
+    char c196 = 196;
+    printLogo();
+    int maxNameLength = 0;
+    for (int i = 0; i < usersRegistered; i++)
+    {
+
+        if (roles[i] == "cashier")
+        {
+            if (usernames[i].length() > maxNameLength)
+            {
+                maxNameLength = usernames[i].length();
+            }
+            cashiers[cashierCount] = usernames[i];
+            cashiersOrderCount[cashierCount] = orderTakenByCashier[i];
+            totalProcessedOrdersCount += orderTakenByCashier[i];
+            cashierCount++;
+        }
+    }
+    for (int i = offset; i < scaleY + offset; i++)
+    {
+        gotoxy(offset + maxNameLength, i);
+        cout << c245;
+    }
+    for (int i = offset; i < scaleX + offset; i++)
+    {
+        cout << c196;
+    }
+    setColor(theme[0]);
+    for (int i = 0; i < cashierCount; i++)
+    {
+        gotoxy(offset + maxNameLength - cashiers[i].length() - 1, (i * scaleY / cashierCount) + offset);
+        cout << cashiers[i];
+        gotoxy(offset + maxNameLength + 1, (i * scaleY / cashierCount) + offset);
+        if (totalProcessedOrdersCount != 0)
+        {
+            for (int j = 0; j < scaleX * cashiersOrderCount[i] / totalProcessedOrdersCount; j++)
+            {
+                cout << c254;
+            }
+            cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
+        }
+    }
+}
+double calculateTotalCostPrice(int productsInOrderCount)
+{
+    int productIndex;
+    double totalCostPrice = 0;
+    for (int i = 0; i < productsInOrderCount; i++)
+    {
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        totalCostPrice += productInOrderQuantities[i] * productCostPrice[productIndex];
+    }
+    return totalCostPrice;
+}
+void printPricePayable(double pricePayable)
+{
+    setColor(0xa);
+    cout << "Price payable: " << pricePayable << " Rs" << endl;
+    setColor(theme[2]);
+    takech();
 }
 void swapProduct(int firstProductIndex, int secondProductIndex)
 {
@@ -684,12 +771,6 @@ bool errorDisplay(string error)
         }
     }
 }
-void halt()
-{
-    cout << "Press any key to continue..." << endl;
-    takech();
-    cin.sync();
-}
 void viewNetProfit()
 {
     int x = consoleWidth / 2, y = consoleHeight / 2;
@@ -703,7 +784,6 @@ void viewNetProfit()
     cout << netProfit << " Rs";
     setColor(theme[2]);
 }
-// file related function
 void storeUsers()
 {
     fstream file;
@@ -865,27 +945,6 @@ string parseData(string line, int fieldNumber)
             return result;
         }
     }
-}
-void printProductList()
-{
-    printLogo();
-    printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
-    printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
-    if (role == "admin")
-    {
-        printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
-        printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
-    }
-    else
-    {
-        printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
-    }
-}
-void usersList()
-{
-    printLogo();
-    printStringColumn(consoleWidth / 32, 5, "Username", usernames, usersRegistered, 5 * consoleWidth / 32);
-    printStringColumn(16 * consoleWidth / 32, 5, "Role", roles, usersRegistered, 1 * consoleWidth / 32);
 }
 void productAdd()
 {
@@ -1049,13 +1108,6 @@ void addToRecord(double totalCostPrice, double totalSellPrice)
     storeUsers();
     currentRecordCount++;
 }
-void printPricePayable(double pricePayable)
-{
-    setColor(0xa);
-    cout << "Price payable: " << pricePayable << " Rs" << endl;
-    setColor(theme[2]);
-    takech();
-}
 int processProductQuantity(int productLocation)
 {
     int quantity;
@@ -1147,7 +1199,7 @@ void processUserManagement(int choice)
 {
     if (choice == 0)
     {
-        usersList();
+        printUsersList();
         takech();
     }
     else if (choice == 1)
@@ -1280,69 +1332,6 @@ void processStats(int choice)
     {
         drawCashiersPerformanceGraph();
         takech();
-    }
-}
-void printSalesRecord()
-{
-    printLogo();
-    printStringColumn(consoleWidth / 32, 5, "Date", orderDate, currentRecordCount, consoleWidth / 32);
-    printStringColumn(4 * consoleWidth / 32, 5, "Time", orderTime, currentRecordCount, consoleWidth / 32);
-    printStringColumn(15 * consoleWidth / 64, 5, "Cashier Name", orderCashierUserName, currentRecordCount, 3 * consoleWidth / 32);
-    printFloatColumn(18 * consoleWidth / 32, 5, "Total Cost Price", orderTotalCostPrice, currentRecordCount, " Rs", consoleWidth / 32);
-    printFloatColumn(25 * consoleWidth / 32, 5, "Total Sell Price", orderTotalSellPrice, currentRecordCount, " Rs", consoleWidth / 32);
-}
-void drawCashiersPerformanceGraph()
-{
-    int offset = 10;
-    int cashierCount = 0;
-    int scaleX = 16 * consoleWidth / 32;
-    int scaleY = 16 * consoleHeight / 32;
-    int totalProcessedOrdersCount = 0;
-    string cashiers[100];
-    int cashiersOrderCount[100];
-    char c254 = 254;
-    char c245 = 245;
-    char c196 = 196;
-    printLogo();
-    int maxNameLength = 0;
-    for (int i = 0; i < usersRegistered; i++)
-    {
-
-        if (roles[i] == "cashier")
-        {
-            if (usernames[i].length() > maxNameLength)
-            {
-                maxNameLength = usernames[i].length();
-            }
-            cashiers[cashierCount] = usernames[i];
-            cashiersOrderCount[cashierCount] = orderTakenByCashier[i];
-            totalProcessedOrdersCount += orderTakenByCashier[i];
-            cashierCount++;
-        }
-    }
-    for (int i = offset; i < scaleY + offset; i++)
-    {
-        gotoxy(offset + maxNameLength, i);
-        cout << c245;
-    }
-    for (int i = offset; i < scaleX + offset; i++)
-    {
-        cout << c196;
-    }
-    setColor(theme[0]);
-    for (int i = 0; i < cashierCount; i++)
-    {
-        gotoxy(offset + maxNameLength - cashiers[i].length() - 1, (i * scaleY / cashierCount) + offset);
-        cout << cashiers[i];
-        gotoxy(offset + maxNameLength + 1, (i * scaleY / cashierCount) + offset);
-        if (totalProcessedOrdersCount != 0)
-        {
-            for (int j = 0; j < scaleX * cashiersOrderCount[i] / totalProcessedOrdersCount; j++)
-            {
-                cout << c254;
-            }
-            cout << ' ' << (cashiersOrderCount[i] * 100) / totalProcessedOrdersCount << '%';
-        }
     }
 }
 void processAdmin(int choice)
