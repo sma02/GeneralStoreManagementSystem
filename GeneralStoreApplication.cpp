@@ -27,6 +27,7 @@ void printFloatColumn(int x, int y, string title, float items[], int arraySize, 
 double calculateTotalPayable(int productsInOrderCount);
 double calculateTotalCostPrice(int productsInOrderCount);
 void swapProduct(int firstProductIndex, int secondProductIndex);
+void swapUser(int firstUserIndex, int secondUserIndex);
 void productAdd();
 void productRemove();
 void processProductManagement();
@@ -66,7 +67,8 @@ int getCursorY();
 int getConsoleHeight();
 int getConsoleWidth();
 void consoleCursor(bool visibility);
-void ProductSort(string arr[], int arraysize);
+void productSort(string arr[], int arraysize);
+void userSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
 bool takeStringInput(string message, string &str);
 string parseData(string line, int fieldNumber);
@@ -209,7 +211,7 @@ void init()
         passwords[0] = "something";
         roles[0] = "admin";
         userTheme[0] = 0;
-        orderTakenByCashier[0] = -1;
+        orderTakenByCashier[0] = 0;
         usersRegistered++;
     }
     loadProducts();
@@ -451,7 +453,22 @@ void swapProduct(int firstProductIndex, int secondProductIndex)
     productRetailPrice[secondProductIndex] = tempProductRetailPrice;
     productProfitPercentage[secondProductIndex] = tempProductProfitPercentage;
 }
-void ProductSort(string arr[], int arraysize)
+void swapUser(int firstUserIndex, int secondUserIndex)
+{
+    string tempUserName = usernames[firstUserIndex];
+    string tempPasssword = passwords[firstUserIndex];
+    string tempRoles = roles[firstUserIndex];
+    int tempUserTheme = userTheme[firstUserIndex];
+    usernames[firstUserIndex] = usernames[secondUserIndex];
+    passwords[firstUserIndex] = passwords[secondUserIndex];
+    roles[firstUserIndex] = roles[secondUserIndex];
+    userTheme[firstUserIndex] = userTheme[secondUserIndex];
+    usernames[secondUserIndex] = tempUserName;
+    passwords[secondUserIndex] = tempPasssword;
+    roles[secondUserIndex] = tempRoles;
+    userTheme[secondUserIndex] = tempUserTheme;
+}
+void productSort(string arr[], int arraysize)
 {
     for (int i = 0; i < arraysize; i++)
     {
@@ -460,6 +477,19 @@ void ProductSort(string arr[], int arraysize)
             if (arr[j] > arr[i])
             {
                 swapProduct(i, j);
+            }
+        }
+    }
+}
+void userSort(string arr[], int arraysize)
+{
+    for (int i = 0; i < arraysize; i++)
+    {
+        for (int j = 0; j < arraysize; j++)
+        {
+            if (arr[j] > arr[i])
+            {
+                swapUser(i, j);
             }
         }
     }
@@ -737,28 +767,27 @@ void loadUsers()
     fstream file;
     string temp;
     file.open("users.txt", ios::in);
+    if(file)
+    {
     while (getline(file, temp))
     {
         usernames[usersRegistered] = parseData(temp, 1);
         passwords[usersRegistered] = parseData(temp, 2);
         roles[usersRegistered] = parseData(temp, 3);
         userTheme[usersRegistered] = stoi(parseData(temp, 4));
-        if (roles[usersRegistered] == "cashier")
-        {
-            orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 5));
-        }
-        else
-        {
-            orderTakenByCashier[usersRegistered] = -1;
-        }
+        orderTakenByCashier[usersRegistered] = stoi(parseData(temp, 5));
         usersRegistered++;
     }
+    }
+    file.close();
 }
 void loadProducts()
 {
     fstream file;
     string temp;
     file.open("products.txt", ios::in);
+    if(file)
+    {
     while (getline(file, temp))
     {
         productNames[currentNumberOfProducts] = parseData(temp, 1);
@@ -767,6 +796,7 @@ void loadProducts()
         productProfitPercentage[currentNumberOfProducts] = stof(parseData(temp, 4));
         productRetailPrice[currentNumberOfProducts] = productCostPrice[currentNumberOfProducts] * (100 + productProfitPercentage[currentNumberOfProducts]) / 100;
         currentNumberOfProducts++;
+    }
     }
     file.close();
 }
@@ -902,7 +932,7 @@ void productAdd()
     productRetailPrice[currentNumberOfProducts] = costPrice * (100 + profitPercentage) / 100;
     productQuantity[currentNumberOfProducts] = quantity;
     currentNumberOfProducts++;
-    ProductSort(productNames, currentNumberOfProducts);
+    productSort(productNames, currentNumberOfProducts);
     storeProducts();
 }
 void productRemove()
@@ -1050,7 +1080,7 @@ void productUpdateHandle(int choice, int productLocation)
             return;
         }
         productNames[productLocation] = productName;
-        ProductSort(productNames, currentNumberOfProducts);
+        productSort(productNames, currentNumberOfProducts);
     }
     else if (choice == 1)
     {
@@ -1457,7 +1487,9 @@ void addUser()
     passwords[usersRegistered] = password;
     roles[usersRegistered] = role;
     userTheme[usersRegistered] = 0;
+    orderTakenByCashier[usersRegistered] = 0;
     usersRegistered++;
+    userSort(usernames, usersRegistered);
     storeUsers();
 }
 void removeUser()
