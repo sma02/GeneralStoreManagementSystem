@@ -46,8 +46,6 @@ void processAdmin(int choice);
 void processCashier(int choice);
 void processUserManagement(int choice);
 void processStats(int choice);
-bool errorEmptyString(string item);
-bool errorLessThanZero(string item);
 bool errorDisplay(string error);
 // file related functions
 void storeUsers();
@@ -69,23 +67,22 @@ int getConsoleWidth();
 void consoleCursor(bool visibility);
 void ProductSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
-string takeStringInput(string message);
+bool takeStringInput(string message, string &str);
 string parseData(string line, int fieldNumber);
-int takeIntInput(string message);
-float takeFloatInput(string message);
+bool takeIntInput(string message, int &data);
+bool takeFloatInput(string message, float &data);
 bool takeYesNoQuestion(string message);
-bool isPresent(string data, string array[], int arraySize);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
 void movePointer(int previousPos, int pointerPos, int offset, short color);
-void eraseInput(int initialVerticalPos);
+void eraseInput();
 void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
 void handleTimeUpdate(bool flag);
 string getCurrentDate();
 string getCurrentTime();
 string getCurrentDateAndTime();
-string takeLine(string &str);
+bool takeLine(string &str);
 int getCurrentMinute();
 char takech();
 // string menus
@@ -120,9 +117,7 @@ string userManageMenu[] = {
 
 string statsMenu[] = {
     "View net profit",
-    "Relative Performace of cashiers",
     "Sales record",
-    "monthly sales graph",
     "Cashiers performance graph",
     "back..."};
 // Products
@@ -387,7 +382,7 @@ void ProductSort(string arr[], int arraysize)
 {
     for (int i = 0; i < arraysize; i++)
     {
-        for (int j = 0; j < arraysize - 1; j++)
+        for (int j = 0; j < arraysize ; j++)
         {
             if (arr[j] > arr[i])
             {
@@ -396,16 +391,16 @@ void ProductSort(string arr[], int arraysize)
         }
     }
 }
-void eraseInput(int initialVerticalPos)
+void eraseInput()
 {
-    int finalVerticalPos = getCursorY();
+    int position=getCursorY();
     setColor(0);
-    gotoxy(0, initialVerticalPos);
-    for (int i = initialVerticalPos; i < finalVerticalPos; i++)
+    gotoxy(0, position-3);
+    for (int i = position-3; i < position; i++)
     {
         cout << getStringAtxy(0, i);
     }
-    gotoxy(0, initialVerticalPos);
+    gotoxy(0, position-3);
 }
 bool isFloat(string str)
 {
@@ -427,109 +422,111 @@ bool isInt(string str)
     }
     return true;
 }
-string takeStringInput(string message)
+bool takeStringInput(string message, string &str)
 {
-    int y = getCursorY();
-    string input = "";
-    while (input == "")
+    bool status;
+    str = "";
+    while (1)
     {
         setColor(0x2);
         consoleCursor(true);
         cout << "Enter the " << message << ": ";
         setColor(0x6);
-        cin.sync();
-        takeLine(input);
-        cin.sync();
+        status = takeLine(str);
         setColor(0x7);
         consoleCursor(false);
-        if (input == "")
+        if (str == "" && status)
         {
-            if (errorEmptyString(message))
+            if (errorDisplay(message + " can't be empty!"))
             {
-                return "";
+                return false;
             }
-            eraseInput(y);
+            eraseInput();
+        }
+        else if (!status)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
         }
     }
-    return input;
 }
-int takeIntInput(string message)
+bool takeIntInput(string message, int &data)
 {
-    int value;
     while (1)
     {
-        string tempInput = takeStringInput(message);
-        if (tempInput == "__Exit")
+        string tempInput;
+        if (!takeStringInput(message, tempInput))
         {
-            return -1;
+            return false;
         }
         if (isInt(tempInput))
         {
-            value = stoi(tempInput);
-            if (value < 0)
+            data = stoi(tempInput);
+            if (data < 0)
             {
-                if (errorLessThanZero(message))
+                if (errorDisplay(message + " can't be less than zero!"))
                 {
-                    return -1;
+                    return false;
                 }
-                eraseInput(getCursorY() - 3);
+                eraseInput();
             }
             else
             {
-                return stof(tempInput);
+                return true;
             }
         }
         else
         {
             if (errorDisplay("invalid value for " + message))
             {
-                return -1;
+                return false;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
     }
-    return value;
+    return true;
 }
-float takeFloatInput(string message)
+bool takeFloatInput(string message, float &data)
 {
-    float value;
     while (1)
     {
-        string tempInput = takeStringInput(message);
-        if (tempInput == "__Exit")
+        string tempInput;
+        if (!takeStringInput(message, tempInput))
         {
-            return -1;
+            return false;
         }
         if (isFloat(tempInput))
         {
-            value = stof(tempInput);
-            if (value < 0)
+            data = stof(tempInput);
+            if (data < 0)
             {
-                if (errorLessThanZero(message))
+                if (errorDisplay(message + " can't be less than zero!"))
                 {
-                    return -1;
+                    return false;
                 }
-                eraseInput(getCursorY() - 3);
+                eraseInput();
             }
             else
             {
-                return stof(tempInput);
+                return true;
             }
         }
         else
         {
             if (errorDisplay("invalid value for " + message))
             {
-                return -1;
+                return false;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
     }
-    return value;
+    return true;
 }
 bool takeYesNoQuestion(string message)
 {
-    //  printPadding(8*consoleWidth/32,24*consoleHeight/32,16*consoleWidth/32,4*consoleHeight/32,0x10);
     int option;
     setColor(0x3);
     cout << message << "?[press Y or N]: " << endl;
@@ -546,17 +543,6 @@ bool takeYesNoQuestion(string message)
             return false;
         }
     }
-}
-bool isPresent(string data, string array[], int arraySize)
-{
-    for (int i = 0; i < arraySize; i++)
-    {
-        if (data == array[i])
-        {
-            return true;
-        }
-    }
-    return false;
 }
 int searchIndex(string data, string array[], int arraySize)
 {
@@ -595,16 +581,6 @@ bool errorDisplay(string error)
         }
     }
 }
-bool errorLessThanZero(string item)
-{
-    string actualError = item + " cannot be less than zero!";
-    return errorDisplay(actualError);
-}
-bool errorEmptyString(string item)
-{
-    string actualError = item + " cannot be empty!";
-    return errorDisplay(actualError);
-}
 void halt()
 {
     cout << "Press any key to continue..." << endl;
@@ -613,7 +589,7 @@ void halt()
 }
 void viewNetProfit()
 {
-    int x = 40, y = 10;
+    int x = consoleWidth/2, y = consoleHeight/2;
     printLogo();
     printCurrentMenuAndUserType("Main Menu>Statistics>Net Profit");
     gotoxy(x - 12, y);
@@ -623,7 +599,6 @@ void viewNetProfit()
     setColor(0x60);
     cout << netProfit << " Rs";
     setColor(0x7);
-    takech();
 }
 // file related function
 void storeUsers()
@@ -817,8 +792,7 @@ void productAdd()
     printCurrentMenuAndUserType("Main Menu>Product Add");
     while (1)
     {
-        productName = takeStringInput("name of product");
-        if (productName == "__Exit")
+        if (!takeStringInput("name of product", productName))
         {
             return;
         }
@@ -828,25 +802,22 @@ void productAdd()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
             break;
         }
     }
-    costPrice = takeFloatInput("unit cost price");
-    if (costPrice < 0)
+    if (!takeFloatInput("unit cost price", costPrice))
     {
         return;
     }
-    profitPercentage = takeFloatInput("profit percentage on product");
-    if (profitPercentage < 0)
+    if (!takeFloatInput("profit percentage on product", profitPercentage))
     {
         return;
     }
-    quantity = takeIntInput("quantity of product in inventory");
-    if (quantity < 0)
+    if (!takeIntInput("quantity of product in inventory", quantity))
     {
         return;
     }
@@ -867,23 +838,26 @@ void productRemove()
     printCurrentMenuAndUserType("Main Menu>Product Remove");
     while (1)
     {
-        product = takeStringInput("name of product");
-        productLocation = searchIndex(product, productNames, currentNumberOfProducts);
-        if (product == "__Exit")
+
+        if (!takeStringInput("name of product", product))
         {
             return;
         }
-        else if (productLocation == -1)
-        {
-            if (errorDisplay("product does not exist!"))
-            {
-                return;
-            }
-            eraseInput(getCursorY() - 3);
-        }
         else
         {
-            break;
+            productLocation = searchIndex(product, productNames, currentNumberOfProducts);
+            if (productLocation == -1)
+            {
+                if (errorDisplay("product does not exist!"))
+                {
+                    return;
+                }
+                eraseInput();
+            }
+            else
+            {
+                break;
+            }
         }
     }
     for (int i = productLocation; i < currentNumberOfProducts; i++)
@@ -966,12 +940,12 @@ void printPricePayable(double pricePayable)
 }
 int processProductQuantity(int productLocation)
 {
+    int quantity;
     printLogo();
     printCurrentMenuAndUserType("new Order>" + productNames[productLocation] + ">Quantity");
     while (1)
     {
-        int quantity = takeIntInput("Quantity of product");
-        if (quantity < 0)
+        if (!takeIntInput("Quantity of product", quantity))
         {
             return -1;
         }
@@ -981,7 +955,7 @@ int processProductQuantity(int productLocation)
             {
                 return -1;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -995,16 +969,18 @@ void productUpdateHandle(int choice, int productLocation)
     printLogo();
     if (choice == 0)
     {
-        string productName = takeStringInput("product name");
-        if (productName == "__Exit")
+        string productName;
+        if (!takeStringInput("product name", productName))
+        {
             return;
+        }
         productNames[productLocation] = productName;
         ProductSort(productNames, currentNumberOfProducts);
     }
     else if (choice == 1)
     {
-        float costPrice = takeFloatInput("cost price");
-        if (costPrice < 0)
+        float costPrice;
+        if (!takeFloatInput("cost price", costPrice))
         {
             return;
         }
@@ -1013,8 +989,8 @@ void productUpdateHandle(int choice, int productLocation)
     }
     else if (choice == 2)
     {
-        float profitPercentage = takeFloatInput("profit percentage");
-        if (profitPercentage < 0)
+        float profitPercentage;
+        if (!takeFloatInput("profit percentage", profitPercentage))
         {
             return;
         }
@@ -1023,9 +999,11 @@ void productUpdateHandle(int choice, int productLocation)
     }
     else if (choice == 3)
     {
-        int quantity = takeIntInput("product quantity");
-        if (quantity < 0)
+        int quantity;
+        if (!takeIntInput("product quantity", quantity))
+        {
             return;
+        }
         productQuantity[productLocation] = quantity;
     }
     storeProducts();
@@ -1110,8 +1088,8 @@ void handleStats()
     {
         printLogo();
         printCurrentMenuAndUserType("Main Menu>Statistics");
-        printMenuItems(6, statsMenu, 6);
-        choice = takeChoice(6, 6, 0x3);
+        printMenuItems(6, statsMenu, 3);
+        choice = takeChoice(6, 4, 0x3);
         if (choice > 5)
         {
             choice = -1;
@@ -1124,20 +1102,15 @@ void processStats(int choice)
     if (choice == 0)
     {
         viewNetProfit();
+        takech();
     }
     else if (choice == 1)
-    {
-    }
-    else if (choice == 2)
     {
         printSalesRecord();
         takech();
     }
-    else if (choice == 3)
-    {
-    }
 
-    else if (choice == 4)
+    else if (choice == 2)
     {
         drawCashiersPerformanceGraph();
         takech();
@@ -1298,18 +1271,17 @@ void addUser()
     printCurrentMenuAndUserType("Main Menu>Users Management>Add User");
     while (1)
     {
-        username = takeStringInput("username");
-        if (username == "__Exit")
+        if (!takeStringInput("username", username))
         {
             return;
         }
-        else if (isPresent(username, usernames, usersRegistered))
+        else if (searchIndex(username, usernames, usersRegistered)!=-1)
         {
             if (errorDisplay("Username already registered!"))
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -1318,8 +1290,7 @@ void addUser()
     }
     while (1)
     {
-        password = takeStringInput("password");
-        if (password == "__Exit")
+        if (!takeStringInput("password", password))
         {
             return;
         }
@@ -1329,7 +1300,7 @@ void addUser()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -1338,8 +1309,7 @@ void addUser()
     }
     while (1)
     {
-        role = takeStringInput("role for user");
-        if (role == "__Exit")
+        if (!takeStringInput("role for user", role))
         {
             return;
         }
@@ -1349,7 +1319,7 @@ void addUser()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -1370,8 +1340,7 @@ void removeUser()
     printCurrentMenuAndUserType("Main Menu>Users Management>Remove User");
     while (1)
     {
-        username = takeStringInput("username");
-        if (username == "__Exit")
+        if (!takeStringInput("username", username))
         {
             return;
         }
@@ -1382,7 +1351,7 @@ void removeUser()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else if (userLocation == -1)
         {
@@ -1390,7 +1359,7 @@ void removeUser()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -1421,8 +1390,7 @@ void changePassword()
     }
     while (1)
     {
-        password = takeStringInput("password");
-        if (password == "__Exit")
+        if (!takeStringInput("password", password))
         {
             return;
         }
@@ -1432,7 +1400,7 @@ void changePassword()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else if (password == currentUserPassword)
         {
@@ -1440,7 +1408,7 @@ void changePassword()
             {
                 return;
             }
-            eraseInput(getCursorY() - 3);
+            eraseInput();
         }
         else
         {
@@ -1538,7 +1506,7 @@ void movePointer(int previousPos, int pointerPos, int offset, short color)
     gotoxy(0, pointerPos);
     cout << temp;
 }
-string takeLine(string &str)
+bool takeLine(string &str)
 {
     char c = 0;
     while (1)
@@ -1550,8 +1518,7 @@ string takeLine(string &str)
             c = getch();
             if (c == VK_ESCAPE)
             {
-                str = "__Exit";
-                break;
+                return false;
             }
             else if (c == '\b')
             {
@@ -1579,7 +1546,7 @@ string takeLine(string &str)
             }
         }
     }
-    return str;
+    return true;
 }
 void gotoxy(int x, int y)
 {
