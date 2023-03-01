@@ -81,7 +81,7 @@ void movePointer(int previousPos, int pointerPos, int offset, short color);
 void eraseInput(int initialVerticalPos);
 void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
-void handleTimeUpdate();
+void handleTimeUpdate(bool flag);
 string getCurrentDate();
 string getCurrentTime();
 string getCurrentDateAndTime();
@@ -273,8 +273,6 @@ void printBill(int productsInOrderCount)
     printStringColumn(consoleWidth / 32, 5, "Product", productsInOrderNames, productsInOrderCount, 5 * consoleWidth / 32);
     printIntColumn(17 * consoleWidth / 32, 5, "Quantity", productInOrderQuantities, productsInOrderCount, consoleWidth / 32);
     printFloatColumn(27 * consoleWidth / 32, 5, "Price", productInOrderPrices, productsInOrderCount, " Rs", consoleWidth / 32);
-
-    // gotoxy(0, 22);
     cout << endl;
 }
 double calculateTotalPayable(int productsInOrderCount)
@@ -628,20 +626,6 @@ void viewNetProfit()
     takech();
 }
 // file related function
-/*void storeProducts()
-{
-    fstream file;
-    char c255 = 255;
-    file.open("products.txt", ios::out);
-    for (int i = 0; i < currentNumberOfProducts; i++)
-    {
-        file << productNames[i] << endl;
-        file << productCostPrice[i] << endl;
-        file << productQuantity[i] << endl;
-        file << productProfitPercentage[i] << endl;
-    }
-    file.close();
-}*/
 void storeUsers()
 {
     fstream file;
@@ -913,63 +897,6 @@ void productRemove()
     currentNumberOfProducts--;
     storeProducts();
 }
-/*void processNewOrder()
-{
-    string product;
-    int productsInOrderCount = 0;
-    int quantity;
-    int productIndex = -1;
-    int productInOrderIndex = -1;
-    bool running = true;
-    double pricePayable = 0;
-    int option;
-    printLogo();
-    printCurrentMenuAndUserType("Main Menu>New Order");
-    while (running)
-    {
-        product = takeStringInput("name of product");
-        productIndex = searchIndex(product, productNames, currentNumberOfProducts);
-        if (productIndex == -1)
-        {
-            running = takeYesNoQuestion("Another item");
-            continue;
-        }
-        quantity = takeIntInput("quantity");
-        if (quantity < 0)
-        {
-            errorDisplay("quantity cannot be negetive!");
-            continue;
-        }
-        else if (quantity == 0)
-        {
-            errorDisplay("quantity cannot be negetive!");
-            continue;
-        }
-        else if (quantity > productQuantity[productIndex])
-        {
-            errorDisplay("not enough quantity present in inventory!");
-            continue;
-        }
-        productInOrderIndex = searchIndex(product, productsInOrderNames, productsInOrderCount);
-        if (productInOrderIndex == -1)
-        {
-            productsInOrderNames[productsInOrderCount] = product;
-            productInOrderQuantities[productsInOrderCount] = quantity;
-            productsInOrderCount++;
-        }
-        else if (productQuantity[productIndex] < (productInOrderQuantities[productInOrderIndex] + quantity))
-        {
-            errorDisplay("not enough quantity present in inventory!");
-            continue;
-        }
-        else
-        {
-            productInOrderQuantities[productInOrderIndex] += quantity;
-        }
-        running = takeYesNoQuestion("Another item");
-    }
-    printBill(productsInOrderCount);
-}*/
 void processNewOrder()
 {
     int productsInOrderCount = 0;
@@ -1542,7 +1469,7 @@ int takeChoice(int offset, int size, short color)
     }
     while (1)
     {
-        handleTimeUpdate();
+        handleTimeUpdate(false);
         if (kbhit())
         {
             key = getch();
@@ -1616,7 +1543,7 @@ string takeLine(string &str)
     char c = 0;
     while (1)
     {
-        handleTimeUpdate();
+        handleTimeUpdate(true);
         setColor(0x6);
         if (kbhit())
         {
@@ -1745,12 +1672,21 @@ void logout()
     role = -1;
     currentUser = "";
 }
-void handleTimeUpdate()
+void handleTimeUpdate(bool flag)
 {
+
     if (currentMinute != getCurrentMinute())
     {
+        if (flag)
+        {
+            consoleCursor(false);
+        }
         currentMinute = getCurrentMinute();
         printDateAndTime();
+        if (flag)
+        {
+            consoleCursor(true);
+        }
     }
 }
 char takech()
@@ -1758,7 +1694,7 @@ char takech()
     cin.clear();
     while (1)
     {
-        handleTimeUpdate();
+        handleTimeUpdate(false);
         if (kbhit())
         {
             return getch();
