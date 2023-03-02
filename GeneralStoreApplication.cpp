@@ -7,7 +7,6 @@ using namespace std;
 
 // prototypes
 void init();
-void Login();
 void addUser();
 void removeUser();
 void changePassword();
@@ -28,12 +27,18 @@ void swapProduct(int firstProductIndex, int secondProductIndex);
 void swapUser(int firstUserIndex, int secondUserIndex);
 void productAdd();
 void productRemove();
-void viewNetProfit();
+void viewNetProfitWindow();
 void logout();
+// handlers
+void handleLogin();
 void handleAdmin();
 void handleCashier();
 void handleUserManagement();
 void handleStats();
+void handleTimeUpdate();
+void handleThemeChange();
+// processing functions
+void processLogin(string username, string password);
 void processAdmin(int choice);
 void processCashier(int choice);
 void processUserManagement(int choice);
@@ -41,7 +46,7 @@ void processStats(int choice);
 void processThemeChange(int choice);
 void processProductManagement();
 int processProductQuantity(int productLocation);
-void productUpdateHandle(int choice, int productLocation);
+void handleProductUpdate(int choice, int productLocation);
 void processNewOrder();
 bool errorDisplay(string error);
 // file related functions
@@ -57,12 +62,14 @@ void loadSalesRecord();
 void printTitle(string text, int paddng, short color);
 void printPadding(int x, int y, int length, int width, short color);
 void setColor(short color);
+short getColor();
 int getCursorX();
 int getCursorY();
 void gotoxy(int x, int y);
 int getConsoleHeight();
 int getConsoleWidth();
-void consoleCursor(bool visibility);
+void setConsoleCursor(bool visibility);
+bool getConsoleCursor();
 void productSort(string arr[], int arraysize);
 void userSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
@@ -74,14 +81,11 @@ bool takeYesNoQuestion(string message);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
 void movePointer(int previousPos, int pointerPos, int offset, short color);
-void eraseInput();
+void eraseInputLinesFromConsole();
 void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
-void handleTimeUpdate(bool flag);
-void handleThemeChange();
 string getCurrentDate();
 string getCurrentTime();
-string getCurrentDateAndTime();
 bool takeLine(string &str);
 int getCurrentMinute();
 char takech();
@@ -136,7 +140,7 @@ string themeMenu[] = {
     "back..."};
 // Products
 #define NoOfProducts 100
-int currentNumberOfProducts = 0;
+int currentProductsCount = 0;
 string productNames[NoOfProducts];
 float productCostPrice[NoOfProducts];
 float productProfitPercentage[NoOfProducts];
@@ -164,6 +168,7 @@ string orderCashierUserName[NoOfRecords];
 float orderTotalCostPrice[NoOfRecords];
 float orderTotalSellPrice[NoOfRecords];
 int currentRecordCount = 0;
+
 // Globals
 int consoleWidth;
 int consoleHeight;
@@ -182,7 +187,7 @@ int main()
     {
         while (!someoneLoggedIn)
         {
-            Login();
+            handleLogin();
         }
         while (role == "admin")
         {
@@ -196,7 +201,6 @@ int main()
 }
 void init()
 {
-    consoleCursor(false);
     consoleWidth = getConsoleWidth();
     consoleHeight = getConsoleHeight();
     loadUsers();
@@ -332,7 +336,7 @@ void printBill(int productsInOrderCount)
     float productInOrderPrices[productsInOrderCount];
     for (int i = 0; i < productsInOrderCount; i++)
     {
-        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentProductsCount);
         productInOrderPrices[i] = productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
     }
     printLogo();
@@ -410,16 +414,16 @@ void printCurrentMenuAndUserType(string menuName)
 void printProductList()
 {
     printLogo();
-    printStringColumn(consoleWidth / 32, 5, "product", productNames, currentNumberOfProducts, 2 * consoleWidth / 32);
-    printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentNumberOfProducts, consoleWidth / 32);
+    printStringColumn(consoleWidth / 32, 5, "product", productNames, currentProductsCount, 2 * consoleWidth / 32);
+    printIntColumn(9 * consoleWidth / 32, 5, "Quantity Present", productQuantity, currentProductsCount, consoleWidth / 32);
     if (role == "admin")
     {
-        printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
-        printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentNumberOfProducts, "%", consoleWidth / 32);
+        printFloatColumn(19 * consoleWidth / 32, 5, "cost Price", productCostPrice, currentProductsCount, " Rs", consoleWidth / 32);
+        printFloatColumn(27 * consoleWidth / 32, 5, "Profit", productProfitPercentage, currentProductsCount, "%", consoleWidth / 32);
     }
     else
     {
-        printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentNumberOfProducts, " Rs", consoleWidth / 32);
+        printFloatColumn(19 * consoleWidth / 32, 5, "Retail price", productRetailPrice, currentProductsCount, " Rs", consoleWidth / 32);
     }
 }
 void printUsersList()
@@ -434,7 +438,7 @@ double calculateTotalPayable(int productsInOrderCount)
     double pricePayable = 0;
     for (int i = 0; i < productsInOrderCount; i++)
     {
-        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentProductsCount);
         pricePayable += productInOrderQuantities[i] * productCostPrice[productIndex] * (100 + productProfitPercentage[productIndex]) / 100;
         netProfit += (productProfitPercentage[productIndex] * productCostPrice[productIndex] * productInOrderQuantities[i]) / 100;
         productQuantity[productIndex] -= productInOrderQuantities[i];
@@ -454,8 +458,8 @@ void drawCashiersPerformanceGraph()
 {
     int offset = 10;
     int cashierCount = 0;
-    int scaleX = 16 * consoleWidth / 32;
-    int scaleY = 16 * consoleHeight / 32;
+    int scaleX = 20 * consoleWidth / 32;
+    int scaleY = 19 * consoleHeight / 32;
     int totalProcessedOrdersCount = 0;
     string cashiers[100];
     int cashiersOrderCount[100];
@@ -463,6 +467,8 @@ void drawCashiersPerformanceGraph()
     char c245 = 245;
     char c196 = 196;
     printLogo();
+    printCurrentMenuAndUserType("Main Menu>Statistics>Cashiers performance graph");
+    setColor(theme[2]);
     int maxNameLength = 0;
     for (int i = 0; i < usersRegistered; i++)
     {
@@ -510,7 +516,7 @@ double calculateTotalCostPrice(int productsInOrderCount)
     double totalCostPrice = 0;
     for (int i = 0; i < productsInOrderCount; i++)
     {
-        productIndex = searchIndex(productsInOrderNames[i], productNames, currentNumberOfProducts);
+        productIndex = searchIndex(productsInOrderNames[i], productNames, currentProductsCount);
         totalCostPrice += productInOrderQuantities[i] * productCostPrice[productIndex];
     }
     return totalCostPrice;
@@ -581,7 +587,7 @@ void userSort(string arr[], int arraysize)
         }
     }
 }
-void eraseInput()
+void eraseInputLinesFromConsole()
 {
     int position = getCursorY();
     setColor(0);
@@ -619,19 +625,19 @@ bool takeStringInput(string message, string &str)
     while (1)
     {
         setColor(theme[8]);
-        consoleCursor(true);
+        setConsoleCursor(true);
         cout << "Enter the " << message << ": ";
         setColor(theme[4]);
         status = takeLine(str);
         setColor(theme[2]);
-        consoleCursor(false);
+        setConsoleCursor(false);
         if (str == "" && status)
         {
             if (errorDisplay(message + " can't be empty!"))
             {
                 return false;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else if (!status)
         {
@@ -661,7 +667,7 @@ bool takeIntInput(string message, int &data)
                 {
                     return false;
                 }
-                eraseInput();
+                eraseInputLinesFromConsole();
             }
             else
             {
@@ -674,7 +680,7 @@ bool takeIntInput(string message, int &data)
             {
                 return false;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
     }
     return true;
@@ -697,7 +703,7 @@ bool takeFloatInput(string message, float &data)
                 {
                     return false;
                 }
-                eraseInput();
+                eraseInputLinesFromConsole();
             }
             else
             {
@@ -710,7 +716,7 @@ bool takeFloatInput(string message, float &data)
             {
                 return false;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
     }
     return true;
@@ -771,7 +777,7 @@ bool errorDisplay(string error)
         }
     }
 }
-void viewNetProfit()
+void viewNetProfitWindow()
 {
     int x = consoleWidth / 2, y = consoleHeight / 2;
     printLogo();
@@ -808,7 +814,7 @@ void storeProducts()
     file.open("products.txt", ios::out);
     if (file)
     {
-        for (int i = 0; i < currentNumberOfProducts; i++)
+        for (int i = 0; i < currentProductsCount; i++)
         {
             file << productNames[i] << ',';
             file << productCostPrice[i] << ',';
@@ -870,12 +876,12 @@ void loadProducts()
     {
         while (getline(file, temp))
         {
-            productNames[currentNumberOfProducts] = parseData(temp, 1);
-            productCostPrice[currentNumberOfProducts] = stof(parseData(temp, 2));
-            productQuantity[currentNumberOfProducts] = stoi(parseData(temp, 3));
-            productProfitPercentage[currentNumberOfProducts] = stof(parseData(temp, 4));
-            productRetailPrice[currentNumberOfProducts] = productCostPrice[currentNumberOfProducts] * (100 + productProfitPercentage[currentNumberOfProducts]) / 100;
-            currentNumberOfProducts++;
+            productNames[currentProductsCount] = parseData(temp, 1);
+            productCostPrice[currentProductsCount] = stof(parseData(temp, 2));
+            productQuantity[currentProductsCount] = stoi(parseData(temp, 3));
+            productProfitPercentage[currentProductsCount] = stof(parseData(temp, 4));
+            productRetailPrice[currentProductsCount] = productCostPrice[currentProductsCount] * (100 + productProfitPercentage[currentProductsCount]) / 100;
+            currentProductsCount++;
         }
     }
     file.close();
@@ -960,13 +966,13 @@ void productAdd()
         {
             return;
         }
-        else if (searchIndex(productName, productNames, currentNumberOfProducts) != -1)
+        else if (searchIndex(productName, productNames, currentProductsCount) != -1)
         {
             if (errorDisplay("product already exists!"))
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -985,13 +991,13 @@ void productAdd()
     {
         return;
     }
-    productNames[currentNumberOfProducts] = productName;
-    productCostPrice[currentNumberOfProducts] = costPrice;
-    productProfitPercentage[currentNumberOfProducts] = profitPercentage;
-    productRetailPrice[currentNumberOfProducts] = costPrice * (100 + profitPercentage) / 100;
-    productQuantity[currentNumberOfProducts] = quantity;
-    currentNumberOfProducts++;
-    productSort(productNames, currentNumberOfProducts);
+    productNames[currentProductsCount] = productName;
+    productCostPrice[currentProductsCount] = costPrice;
+    productProfitPercentage[currentProductsCount] = profitPercentage;
+    productRetailPrice[currentProductsCount] = costPrice * (100 + profitPercentage) / 100;
+    productQuantity[currentProductsCount] = quantity;
+    currentProductsCount++;
+    productSort(productNames, currentProductsCount);
     storeProducts();
 }
 void productRemove()
@@ -1009,14 +1015,14 @@ void productRemove()
         }
         else
         {
-            productLocation = searchIndex(product, productNames, currentNumberOfProducts);
+            productLocation = searchIndex(product, productNames, currentProductsCount);
             if (productLocation == -1)
             {
                 if (errorDisplay("product does not exist!"))
                 {
                     return;
                 }
-                eraseInput();
+                eraseInputLinesFromConsole();
             }
             else
             {
@@ -1024,7 +1030,7 @@ void productRemove()
             }
         }
     }
-    for (int i = productLocation; i < currentNumberOfProducts; i++)
+    for (int i = productLocation; i < currentProductsCount; i++)
     {
         productNames[i] = productNames[i + 1];
         productCostPrice[i] = productCostPrice[i + 1];
@@ -1032,7 +1038,7 @@ void productRemove()
         productProfitPercentage[i] = productProfitPercentage[i + 1];
         productRetailPrice[i] = productRetailPrice[i + 1];
     }
-    currentNumberOfProducts--;
+    currentProductsCount--;
     storeProducts();
 }
 void processNewOrder()
@@ -1046,9 +1052,9 @@ void processNewOrder()
     while (1)
     {
         printProductList();
-        if (currentNumberOfProducts)
+        if (currentProductsCount)
         {
-            int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
+            int productLocation = takeChoice(7, currentProductsCount, theme[4]);
 
             quantity = processProductQuantity(productLocation);
             if (quantity == -1)
@@ -1125,7 +1131,7 @@ int processProductQuantity(int productLocation)
             {
                 return -1;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1134,7 +1140,7 @@ int processProductQuantity(int productLocation)
     }
     return -1;
 }
-void productUpdateHandle(int choice, int productLocation)
+void handleProductUpdate(int choice, int productLocation)
 {
     printLogo();
     if (choice == 0)
@@ -1145,7 +1151,7 @@ void productUpdateHandle(int choice, int productLocation)
             return;
         }
         productNames[productLocation] = productName;
-        productSort(productNames, currentNumberOfProducts);
+        productSort(productNames, currentProductsCount);
     }
     else if (choice == 1)
     {
@@ -1319,7 +1325,7 @@ void processStats(int choice)
 {
     if (choice == 0)
     {
-        viewNetProfit();
+        viewNetProfitWindow();
         takech();
     }
     else if (choice == 1)
@@ -1375,7 +1381,7 @@ void processProductManagement()
     while (1)
     {
         printProductList();
-        int productLocation = takeChoice(7, currentNumberOfProducts, theme[4]);
+        int productLocation = takeChoice(7, currentProductsCount, theme[4]);
         if (productLocation != -1)
         {
 
@@ -1383,7 +1389,7 @@ void processProductManagement()
             printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation]);
             printMenuItems(6, productEditMenu, 5);
             int choice = takeChoice(6, 5, theme[0]);
-            productUpdateHandle(choice, productLocation);
+            handleProductUpdate(choice, productLocation);
         }
         else
         {
@@ -1391,11 +1397,10 @@ void processProductManagement()
         }
     }
 }
-void Login()
+void handleLogin()
 {
     string username, password;
     printLogo();
-    cin.sync();
     int x = 10 * consoleWidth / 32;
     int y = 16 * consoleHeight / 32;
     printPadding(7 * consoleWidth / 32, 9 * consoleHeight / 32, 19 * consoleWidth / 32, 16 * consoleHeight / 32, theme[1]);
@@ -1406,10 +1411,15 @@ void Login()
     printPadding(x + 10, y, 11 * consoleWidth / 32, 2, theme[3]);
     gotoxy(x + 11, y);
     setColor(theme[3]);
-    getline(cin, username);
+    takeLine(username);
     gotoxy(x + 11, y + 1);
-    getline(cin, password);
+    takeLine(password);
     setColor(theme[2]);
+    setConsoleCursor(false);
+    processLogin(username, password);
+}
+void processLogin(string username, string password)
+{
     for (int i = 0; i < usersRegistered; i++)
     {
         if (username == usernames[i])
@@ -1443,7 +1453,7 @@ void addUser()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1462,7 +1472,7 @@ void addUser()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1481,7 +1491,7 @@ void addUser()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1516,7 +1526,7 @@ void removeUser()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else if (userLocation == -1)
         {
@@ -1524,7 +1534,7 @@ void removeUser()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1566,7 +1576,7 @@ void changePassword()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else if (password == currentUserPassword)
         {
@@ -1574,7 +1584,7 @@ void changePassword()
             {
                 return;
             }
-            eraseInput();
+            eraseInputLinesFromConsole();
         }
         else
         {
@@ -1603,7 +1613,7 @@ int takeChoice(int offset, int size, short color)
     }
     while (1)
     {
-        handleTimeUpdate(false);
+        handleTimeUpdate();
         if (kbhit())
         {
             key = getch();
@@ -1677,8 +1687,7 @@ bool takeLine(string &str)
     char c = 0;
     while (1)
     {
-        handleTimeUpdate(true);
-        setColor(theme[4]);
+        handleTimeUpdate();
         if (kbhit())
         {
             c = getch();
@@ -1743,13 +1752,19 @@ string getStringAtxy(short int x, short int y)
     string temp = buffer;
     return temp;
 }
-void consoleCursor(bool visibility)
+void setConsoleCursor(bool visibility)
 {
     CONSOLE_CURSOR_INFO ci;
     HANDLE stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleCursorInfo(stdHandle, &ci);
     ci.bVisible = visibility;
     SetConsoleCursorInfo(stdHandle, &ci);
+}
+bool getConsoleCursor()
+{
+    CONSOLE_CURSOR_INFO ci;
+    GetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ci);
+    return ci.bVisible;
 }
 int getConsoleHeight()
 {
@@ -1766,6 +1781,12 @@ int getConsoleWidth()
 void setColor(short color)
 {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+short getColor()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.wAttributes;
 }
 string getCurrentDate()
 {
@@ -1790,15 +1811,6 @@ int getCurrentMinute()
     time_t now = time(0);
     return localtime(&now)->tm_min;
 }
-string getCurrentDateAndTime()
-{
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    tstruct = *localtime(&now);
-    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
-    return buf;
-}
 void logout()
 {
     someoneLoggedIn = false;
@@ -1806,21 +1818,24 @@ void logout()
     theme1();
     currentUser = "";
 }
-void handleTimeUpdate(bool flag)
+void handleTimeUpdate()
 {
 
     if (currentMinute != getCurrentMinute())
     {
-        if (flag)
+        short color = getColor();
+        bool cursorVisibility = getConsoleCursor();
+        if (cursorVisibility)
         {
-            consoleCursor(false);
+            setConsoleCursor(false);
         }
         currentMinute = getCurrentMinute();
         printDateAndTime();
-        if (flag)
+        if (cursorVisibility)
         {
-            consoleCursor(true);
+            setConsoleCursor(true);
         }
+        setColor(color);
     }
 }
 char takech()
@@ -1828,7 +1843,7 @@ char takech()
     cin.clear();
     while (1)
     {
-        handleTimeUpdate(false);
+        handleTimeUpdate();
         if (kbhit())
         {
             return getch();
