@@ -139,34 +139,31 @@ string themeMenu[] = {
     "alternate Theme",
     "back..."};
 // Products
-#define NoOfProducts 100
+string productNames[100];
+float productCostPrice[100];
+float productProfitPercentage[100];
+float productRetailPrice[100];
+int productQuantity[100];
 int currentProductsCount = 0;
-string productNames[NoOfProducts];
-float productCostPrice[NoOfProducts];
-float productProfitPercentage[NoOfProducts];
-float productRetailPrice[NoOfProducts];
-int productQuantity[NoOfProducts];
 
 // order details
-string productsInOrderNames[NoOfProducts];
-int productInOrderQuantities[NoOfProducts];
+string productsInOrderNames[100];
+int productInOrderQuantities[100];
 
 // login info
-#define NoOfUsers 20
-string usernames[NoOfUsers];
-string passwords[NoOfUsers];
-string roles[NoOfUsers];
-int userTheme[NoOfUsers];
-int orderTakenByCashier[NoOfUsers];
+string usernames[20];
+string passwords[20];
+string roles[20];
+int userTheme[20];
+int orderTakenByCashier[20];
 int usersRegistered = 0;
 
 // Record Variables
-#define NoOfRecords 100
-string orderDate[NoOfRecords];
-string orderTime[NoOfRecords];
-string orderCashierUserName[NoOfRecords];
-float orderTotalCostPrice[NoOfRecords];
-float orderTotalSellPrice[NoOfRecords];
+string orderDate[100];
+string orderTime[100];
+string orderCashierUserName[100];
+float orderTotalCostPrice[100];
+float orderTotalSellPrice[100];
 int currentRecordCount = 0;
 
 // Globals
@@ -1143,6 +1140,7 @@ int processProductQuantity(int productLocation)
 void handleProductUpdate(int choice, int productLocation)
 {
     printLogo();
+    printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation] + ">" + productEditMenu[choice]);
     if (choice == 0)
     {
         string productName;
@@ -1190,7 +1188,7 @@ void handleUserManagement()
     while (choice != -1)
     {
         printLogo();
-        printCurrentMenuAndUserType("Main Menu>Users Management");
+        printCurrentMenuAndUserType("Main Menu>User Management");
         printMenuItems(6, userManageMenu, 5);
 
         choice = takeChoice(6, 5, theme[0]);
@@ -1440,7 +1438,7 @@ void addUser()
     string username, password, role;
     int freeLocation = 0;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Users Management>Add User");
+    printCurrentMenuAndUserType("Main Menu>User Management>Add User");
     while (1)
     {
         if (!takeStringInput("username", username))
@@ -1512,7 +1510,7 @@ void removeUser()
     string username;
     int userLocation = 0;
     printLogo();
-    printCurrentMenuAndUserType("Main Menu>Users Management>Remove User");
+    printCurrentMenuAndUserType("Main Menu>User Management>Remove User");
     while (1)
     {
         if (!takeStringInput("username", username))
