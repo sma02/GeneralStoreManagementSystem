@@ -548,15 +548,18 @@ void swapUser(int firstUserIndex, int secondUserIndex)
     string tempUserName = usernames[firstUserIndex];
     string tempPasssword = passwords[firstUserIndex];
     string tempRoles = roles[firstUserIndex];
+    int tempOrderTakenByCashierCount=orderTakenByCashier[firstUserIndex];
     int tempUserTheme = userTheme[firstUserIndex];
     usernames[firstUserIndex] = usernames[secondUserIndex];
     passwords[firstUserIndex] = passwords[secondUserIndex];
     roles[firstUserIndex] = roles[secondUserIndex];
     userTheme[firstUserIndex] = userTheme[secondUserIndex];
+    orderTakenByCashier[firstUserIndex]=orderTakenByCashier[secondUserIndex];
     usernames[secondUserIndex] = tempUserName;
     passwords[secondUserIndex] = tempPasssword;
     roles[secondUserIndex] = tempRoles;
     userTheme[secondUserIndex] = tempUserTheme;
+    orderTakenByCashier[secondUserIndex]=tempOrderTakenByCashierCount;
 }
 void productSort(string arr[], int arraysize)
 {
@@ -1387,6 +1390,14 @@ void processProductManagement()
             printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation]);
             printMenuItems(6, productEditMenu, 5);
             int choice = takeChoice(6, 5, theme[0]);
+            if(choice>3)
+            {
+                choice=-1;
+            }
+            if(choice==-1)
+            {
+                return;
+            }
             handleProductUpdate(choice, productLocation);
         }
         else
