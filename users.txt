@@ -1,4 +1,4 @@
-admin,pass1234,admin,0,0
+admin,pass1234,admin,3,0
 breaker,breaking,admin,0,0
 cashier,passpass,cashier,0,3
 default,something,admin,0,0

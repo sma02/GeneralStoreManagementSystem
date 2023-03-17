@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
+#include <string>
 using namespace std;
 
 // prototypes
@@ -73,10 +74,10 @@ bool getConsoleCursor();
 void productSort(string arr[], int arraysize);
 void userSort(string arr[], int arraysize);
 string getStringAtxy(short int x, short int y);
-bool takeStringInput(string message, string &str);
+bool takeStringInput(string message, string& str);
 string parseData(string line, int fieldNumber);
-bool takeIntInput(string message, int &data);
-bool takeFloatInput(string message, float &data);
+bool takeIntInput(string message, int& data);
+bool takeFloatInput(string message, float& data);
 bool takeYesNoQuestion(string message);
 int searchIndex(string data, string array[], int arraySize);
 int takeChoice(int offset, int size, short color);
@@ -86,7 +87,7 @@ void printDateAndTime();
 void addToRecord(double totalCostPrice, double totalSellPrice);
 string getCurrentDate();
 string getCurrentTime();
-bool takeLine(string &str);
+bool takeLine(string& str);
 int getCurrentMinute();
 char takech();
 // theme functions
@@ -103,41 +104,41 @@ string adminMenu[] = {
     "User Management",
     "Statistics",
     "Change Theme",
-    "logout..."};
+    "logout..." };
 
 string cashierMenu[] = {
     "View list of products and their quantities",
     "New order",
     "change password",
     "Change Theme",
-    "logout..."};
+    "logout..." };
 
 string productEditMenu[] = {
     "Change Product name",
     "update cost price",
     "update profit percentage needed",
     "update quantity in inventory",
-    "back..."};
+    "back..." };
 
 string userManageMenu[] = {
     "View All users",
     "Add a user",
     "remove a user",
     "change password for your account",
-    "back..."};
+    "back..." };
 
 string statsMenu[] = {
     "View net profit",
     "Sales record",
     "Cashiers performance graph",
-    "back..."};
+    "back..." };
 
 string themeMenu[] = {
     "Default Theme",
     "Red Theme",
     "Blue Theme",
     "alternate Theme",
-    "back..."};
+    "back..." };
 // Products
 string productNames[100];
 float productCostPrice[100];
@@ -330,7 +331,7 @@ void printBill(int productsInOrderCount)
 {
     int productIndex = -1;
     double price = 0;
-    float productInOrderPrices[productsInOrderCount];
+    float *productInOrderPrices=new float[productsInOrderCount];
     for (int i = 0; i < productsInOrderCount; i++)
     {
         productIndex = searchIndex(productsInOrderNames[i], productNames, currentProductsCount);
@@ -548,18 +549,18 @@ void swapUser(int firstUserIndex, int secondUserIndex)
     string tempUserName = usernames[firstUserIndex];
     string tempPasssword = passwords[firstUserIndex];
     string tempRoles = roles[firstUserIndex];
-    int tempOrderTakenByCashierCount=orderTakenByCashier[firstUserIndex];
+    int tempOrderTakenByCashierCount = orderTakenByCashier[firstUserIndex];
     int tempUserTheme = userTheme[firstUserIndex];
     usernames[firstUserIndex] = usernames[secondUserIndex];
     passwords[firstUserIndex] = passwords[secondUserIndex];
     roles[firstUserIndex] = roles[secondUserIndex];
     userTheme[firstUserIndex] = userTheme[secondUserIndex];
-    orderTakenByCashier[firstUserIndex]=orderTakenByCashier[secondUserIndex];
+    orderTakenByCashier[firstUserIndex] = orderTakenByCashier[secondUserIndex];
     usernames[secondUserIndex] = tempUserName;
     passwords[secondUserIndex] = tempPasssword;
     roles[secondUserIndex] = tempRoles;
     userTheme[secondUserIndex] = tempUserTheme;
-    orderTakenByCashier[secondUserIndex]=tempOrderTakenByCashierCount;
+    orderTakenByCashier[secondUserIndex] = tempOrderTakenByCashierCount;
 }
 void productSort(string arr[], int arraysize)
 {
@@ -600,7 +601,7 @@ void eraseInputLinesFromConsole()
 }
 bool isFloat(string str)
 {
-    char *ptr;
+    char* ptr;
     strtof(str.c_str(), &ptr);
     return *ptr == '\0';
 }
@@ -618,7 +619,7 @@ bool isInt(string str)
     }
     return true;
 }
-bool takeStringInput(string message, string &str)
+bool takeStringInput(string message, string& str)
 {
     bool status;
     str = "";
@@ -649,7 +650,7 @@ bool takeStringInput(string message, string &str)
         }
     }
 }
-bool takeIntInput(string message, int &data)
+bool takeIntInput(string message, int& data)
 {
     while (1)
     {
@@ -685,7 +686,7 @@ bool takeIntInput(string message, int &data)
     }
     return true;
 }
-bool takeFloatInput(string message, float &data)
+bool takeFloatInput(string message, float& data)
 {
     while (1)
     {
@@ -1390,11 +1391,11 @@ void processProductManagement()
             printCurrentMenuAndUserType("Main Menu>Update product>" + productNames[productLocation]);
             printMenuItems(6, productEditMenu, 5);
             int choice = takeChoice(6, 5, theme[0]);
-            if(choice>3)
+            if (choice > 3)
             {
-                choice=-1;
+                choice = -1;
             }
-            if(choice==-1)
+            if (choice == -1)
             {
                 return;
             }
@@ -1691,7 +1692,7 @@ void movePointer(int previousPos, int pointerPos, int offset, short color)
     gotoxy(0, pointerPos);
     cout << temp;
 }
-bool takeLine(string &str)
+bool takeLine(string& str)
 {
     char c = 0;
     while (1)
@@ -1753,8 +1754,8 @@ int getCursorY()
 }
 string getStringAtxy(short int x, short int y)
 {
-    char buffer[consoleWidth + 1];
-    COORD position{x, y};
+    char* buffer= new char[consoleWidth + 1];
+    COORD position{ x, y };
     DWORD dwChars;
     ReadConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, consoleWidth, position, &dwChars);
     buffer[consoleWidth] = '\0';
