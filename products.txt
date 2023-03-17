@@ -1,5 +1,5 @@
-cheese cake,20,200,5
-chocolate icecream,200,15,8
+cheese cake,20,195,5
+chocolate icecream,200,12,8
 dawn bread,45,77,3.5
 lifeboy soap,10,250,2
 safeguard soap,12,50,2

@@ -1,6 +1,6 @@
-admin,pass1234,admin,3,0
+admin,pass1234,admin,0,0
 breaker,breaking,admin,0,0
 cashier,passpass,cashier,0,3
 default,something,admin,0,0
 mr. cashier,12345678,cashier,0,1
-theCashier,pa55w0rd,cashier,0,1
+theCashier,pa55w0rd,cashier,0,2
